@@ -15,7 +15,7 @@ class Des(FeistelCipher):
     BLOCK_SIZE = 8
 
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(Des, self).__init__(key)
+        super(Des, self).__init__(key=key, no_of_rounds=16)
 
         if self._key is not None:
             self._check_key_size()
@@ -304,9 +304,42 @@ class Des(FeistelCipher):
 
         return input_data
 
+    def _substitution(self, input_data: np.ndarray):
+        working_buffer = self._working_buffer
+
+        # now take permute bytes back in input buffer
+        input_data = working_buffer[:4]
+
+        return input_data
+
+    def _permutation(self, input_data: np.ndarray):
+        working_buffer = self._working_buffer
+
+        # now take permute bytes back in input buffer
+        input_data = working_buffer[:4]
+
+        return input_data
+
+    def split_lr(self, input_data: np.ndarray):
+        half = len(input_data) // 2
+        return input_data[:half], input_data[half:]
+
+    def merge_lr(self, left: np.ndarray, right: np.ndarray):
+        return np.append(left, right)
+
+    def key_schedule(self):
+        self._round_key = np.zeros((self.no_of_rounds, self.BLOCK_SIZE), dtype=self._key.dtype)
+
+    def round_function(self, right: np.ndarray, key: np.ndarray):
+        # expansion
+        right = self._expansion(right)
+        right = np.bitwise_xor(right, key)
+        right = self._substitution(right)
+        right = self._permutation(right)
+        return right
+
     def set_key(self, key: Union[str, np.ndarray]):
         super(Des, self).set_key(key)
-        self._check_key_size()
 
     def encrypt(self, input_data: Union[str, np.ndarray]):
         if isinstance(input_data, str):
@@ -325,6 +358,7 @@ class Des(FeistelCipher):
             _start = i * no_of_blocks
             _end = _start + self.BLOCK_SIZE
             output_data[_start: _end] = self._initial_permutation(output_data[_start: _end])
+            output_data[_start: _end] = super(Des, self).encrypt(output_data[_start: _end])
             output_data[_start: _end] = self._inverse_initial_permutation(output_data[_start: _end])
 
         return output_data
@@ -386,5 +420,6 @@ if __name__ == '__main__':
     des = Des()
     des.set_key(_key)
     _output_data = des.encrypt(_input_data)
+    print(_output_data)
     # if _output_data != 'C0B7A8D05F3A829C':
     #     raise RuntimeError('Des encryption fails')
