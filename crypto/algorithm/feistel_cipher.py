@@ -13,7 +13,7 @@ class FeistelCipher:
         if key is not None:
             self.set_key(key)
 
-    def _check_key_size(self):
+    def _validate_key(self):
         raise NotImplementedError('Provide the definition of validating key size function')
 
     def split_lr(self, input_data: np.ndarray):
@@ -42,7 +42,7 @@ class FeistelCipher:
         else:
             raise ValueError('Invalid key data type')
 
-        self._check_key_size()
+        self._validate_key()
 
         # calculate no_of_rounds keys
         self.key_schedule()

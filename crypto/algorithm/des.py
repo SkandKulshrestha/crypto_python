@@ -12,17 +12,22 @@ class DesKeySize(IntEnum):
 
 
 class Des(FeistelCipher):
+    # TODO: Better approach would be to compute calculation on 32/64 bits value directly
+    # instead of array:
+    # Work to do:
+    # 2023/02/22: change the functionality
     BLOCK_SIZE = 8
+    KEY_SHIFT = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
 
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
         super(Des, self).__init__(key=key, no_of_rounds=16)
 
         if self._key is not None:
-            self._check_key_size()
+            self._validate_key()
 
         self._working_buffer = np.zeros((self.BLOCK_SIZE,), dtype=np.uint8)
 
-    def _check_key_size(self):
+    def _validate_key(self):
         try:
             DesKeySize(len(self._key))
         except ValueError:
@@ -320,6 +325,124 @@ class Des(FeistelCipher):
 
         return input_data
 
+    def _permutation_choice1(self, input_key: np.ndarray):
+        """
+        Left
+        57    49    41    33    25    17     9
+         1    58    50    42    34    26    18
+        10     2    59    51    43    35    27
+        19    11     3    60    52    44    36
+        Right
+        63    55    47    39    31    23    15
+         7    62    54    46    38    30    22
+        14     6    61    53    45    37    29
+        21    13     5    28    20    12     4
+        """
+        working_buffer = self._working_buffer
+
+        # left
+        permute = input_key[7] & 0x80
+        permute |= (input_key[6] >> 1) & 0x40
+        permute |= (input_key[5] >> 2) & 0x20
+        permute |= (input_key[4] >> 3) & 0x10
+        permute |= (input_key[3] >> 4) & 0x08
+        permute |= (input_key[2] >> 5) & 0x04
+        permute |= (input_key[1] >> 6) & 0x02
+        working_buffer[0] = permute
+
+        permute = input_key[0] & 0x80
+        permute |= input_key[7] & 0x40
+        permute |= (input_key[6] >> 1) & 0x20
+        permute |= (input_key[5] >> 2) & 0x10
+        permute |= (input_key[4] >> 3) & 0x08
+        permute |= (input_key[3] >> 4) & 0x04
+        permute |= (input_key[2] >> 5) & 0x02
+        working_buffer[1] = permute
+
+        permute = (input_key[1] << 1) & 0x80
+        permute |= input_key[0] & 0x40
+        permute |= input_key[7] & 0x20
+        permute |= (input_key[6] >> 1) & 0x10
+        permute |= (input_key[5] >> 2) & 0x08
+        permute |= (input_key[4] >> 3) & 0x04
+        permute |= (input_key[3] >> 4) & 0x02
+        working_buffer[2] = permute
+
+        permute = (input_key[2] << 2) & 0x80
+        permute |= (input_key[1] << 1) & 0x40
+        permute |= input_key[0] & 0x20
+        permute |= input_key[7] & 0x10
+        permute |= (input_key[6] >> 1) & 0x08
+        permute |= (input_key[5] >> 2) & 0x04
+        permute |= (input_key[4] >> 3) & 0x02
+        working_buffer[3] = permute
+
+        # right
+        permute = (input_key[7] << 6) & 0x80
+        permute |= (input_key[6] << 5) & 0x40
+        permute |= (input_key[5] << 4) & 0x20
+        permute |= (input_key[4] << 3) & 0x10
+        permute |= (input_key[3] << 2) & 0x08
+        permute |= (input_key[2] << 1) & 0x04
+        permute |= input_key[1] & 0x02
+        working_buffer[4] = permute
+
+        permute = (input_key[0] << 6) & 0x80
+        permute |= (input_key[7] << 5) & 0x40
+        permute |= (input_key[6] << 4) & 0x20
+        permute |= (input_key[5] << 3) & 0x10
+        permute |= (input_key[4] << 2) & 0x08
+        permute |= (input_key[3] << 1) & 0x04
+        permute |= input_key[2] & 0x02
+        working_buffer[5] = permute
+
+        permute = (input_key[1] << 5) & 0x80
+        permute |= (input_key[0] << 4) & 0x40
+        permute |= (input_key[7] << 3) & 0x20
+        permute |= (input_key[6] << 2) & 0x10
+        permute |= (input_key[5] << 1) & 0x08
+        permute |= input_key[4] & 0x04
+        permute |= (input_key[3] >> 1) & 0x02
+        working_buffer[6] = permute
+
+        permute = (input_key[2] << 4) & 0x80
+        permute |= (input_key[1] << 3) & 0x40
+        permute |= (input_key[0] << 2) & 0x20
+        permute |= (input_key[7] << 1) & 0x10
+        permute |= input_key[6] & 0x08
+        permute |= (input_key[5] >> 1) & 0x04
+        permute |= (input_key[4] >> 2) & 0x02
+        working_buffer[7] = permute
+
+        input_key = working_buffer
+
+        return input_key[:4], input_key[4:]
+
+    def _permutation_choice2(self, left: np.ndarray, right: np.ndarray):
+        """
+        14    17    11    24     1     5
+         3    28    15     6    21    10
+        23    19    12     4    26     8
+        16     7    27    20    13     2
+        41    52    31    37    47    55
+        30    40    51    45    33    48
+        44    49    39    56    34    53
+        46    42    50    36    29    32
+        """
+        return np.concatenate((left, right))
+
+    @staticmethod
+    def _right_rotate(key: np.ndarray, rotate_by: int):
+        temp = key[3] & 0x01
+        reverse_rotate_by = 8 - rotate_by
+        mask = int('1' * rotate_by, 2)
+        mask = mask << reverse_rotate_by
+        key[3] = (key[3] >> rotate_by) | ((key[2] << reverse_rotate_by) & mask)
+        key[2] = (key[2] >> rotate_by) | ((key[1] << reverse_rotate_by) & mask)
+        key[1] = (key[1] >> rotate_by) | ((key[0] << reverse_rotate_by) & mask)
+        key[0] = (key[0] >> rotate_by) | ((temp << reverse_rotate_by) & mask)
+        return key
+
     def split_lr(self, input_data: np.ndarray):
         half = len(input_data) // 2
         return input_data[:half], input_data[half:]
@@ -329,6 +452,13 @@ class Des(FeistelCipher):
 
     def key_schedule(self):
         self._round_key = np.zeros((self.no_of_rounds, self.BLOCK_SIZE), dtype=self._key.dtype)
+
+        key = np.copy(self._key)
+        left, right = self._permutation_choice1(key)
+        for i in range(self.no_of_rounds):
+            right = self._right_rotate(right, self.KEY_SHIFT[i])
+            left = self._right_rotate(right, self.KEY_SHIFT[i])
+            self._round_key[i] = self._permutation_choice2(left, right)
 
     def round_function(self, right: np.ndarray, key: np.ndarray):
         # expansion
