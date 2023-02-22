@@ -1,7 +1,7 @@
 import numpy as np
 
 from enum import IntEnum
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 from feistel_cipher import FeistelCipher
 
 
@@ -15,7 +15,7 @@ class Des(FeistelCipher):
     # TODO: Better approach would be to compute calculation on 32/64 bits value directly
     # instead of array:
     # Work to do:
-    # 2023/02/22: change the functionality
+    # 2023/02/23: change the functionality, verify _permutation_choice1
     BLOCK_SIZE = 8
     KEY_SHIFT = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
 
@@ -325,7 +325,7 @@ class Des(FeistelCipher):
 
         return input_data
 
-    def _permutation_choice1(self, input_key: np.ndarray):
+    def _permutation_choice1(self) -> Tuple[np.uint32, np.uint32]:
         """
         Left
         57    49    41    33    25    17     9
@@ -338,85 +338,77 @@ class Des(FeistelCipher):
         14     6    61    53    45    37    29
         21    13     5    28    20    12     4
         """
-        working_buffer = self._working_buffer
+        key = self._key
+        left = np.uint32(0)
+        right = np.uint32(0)
 
         # left
-        permute = input_key[7] & 0x80
-        permute |= (input_key[6] >> 1) & 0x40
-        permute |= (input_key[5] >> 2) & 0x20
-        permute |= (input_key[4] >> 3) & 0x10
-        permute |= (input_key[3] >> 4) & 0x08
-        permute |= (input_key[2] >> 5) & 0x04
-        permute |= (input_key[1] >> 6) & 0x02
-        working_buffer[0] = permute
+        left |= (key[7]) & 0x80
+        left |= (key[6] >> 2) & 0x40
+        left |= (key[5] >> 3) & 0x20
+        left |= (key[4] >> 4) & 0x10
+        left |= (key[3] >> 5) & 0x08
+        left |= (key[2] >> 6) & 0x04
+        left |= (key[1] >> 7) & 0x02
 
-        permute = input_key[0] & 0x80
-        permute |= input_key[7] & 0x40
-        permute |= (input_key[6] >> 1) & 0x20
-        permute |= (input_key[5] >> 2) & 0x10
-        permute |= (input_key[4] >> 3) & 0x08
-        permute |= (input_key[3] >> 4) & 0x04
-        permute |= (input_key[2] >> 5) & 0x02
-        working_buffer[1] = permute
+        left |= key[0] & 0x80
+        left |= key[7] & 0x40
+        left |= (key[6] >> 1) & 0x20
+        left |= (key[5] >> 2) & 0x10
+        left |= (key[4] >> 3) & 0x08
+        left |= (key[3] >> 4) & 0x04
+        left |= (key[2] >> 5) & 0x02
 
-        permute = (input_key[1] << 1) & 0x80
-        permute |= input_key[0] & 0x40
-        permute |= input_key[7] & 0x20
-        permute |= (input_key[6] >> 1) & 0x10
-        permute |= (input_key[5] >> 2) & 0x08
-        permute |= (input_key[4] >> 3) & 0x04
-        permute |= (input_key[3] >> 4) & 0x02
-        working_buffer[2] = permute
+        left |= (key[1] << 1) & 0x80
+        left |= key[0] & 0x40
+        left |= key[7] & 0x20
+        left |= (key[6] >> 1) & 0x10
+        left |= (key[5] >> 2) & 0x08
+        left |= (key[4] >> 3) & 0x04
+        left |= (key[3] >> 4) & 0x02
 
-        permute = (input_key[2] << 2) & 0x80
-        permute |= (input_key[1] << 1) & 0x40
-        permute |= input_key[0] & 0x20
-        permute |= input_key[7] & 0x10
-        permute |= (input_key[6] >> 1) & 0x08
-        permute |= (input_key[5] >> 2) & 0x04
-        permute |= (input_key[4] >> 3) & 0x02
-        working_buffer[3] = permute
+        left |= (key[2] << 2) & 0x80
+        left |= (key[1] << 1) & 0x40
+        left |= key[0] & 0x20
+        left |= key[7] & 0x10
+        left |= (key[6] >> 1) & 0x08
+        left |= (key[5] >> 2) & 0x04
+        left |= (key[4] >> 3) & 0x02
 
         # right
-        permute = (input_key[7] << 6) & 0x80
-        permute |= (input_key[6] << 5) & 0x40
-        permute |= (input_key[5] << 4) & 0x20
-        permute |= (input_key[4] << 3) & 0x10
-        permute |= (input_key[3] << 2) & 0x08
-        permute |= (input_key[2] << 1) & 0x04
-        permute |= input_key[1] & 0x02
-        working_buffer[4] = permute
+        right |= (key[7] << 6) & 0x80
+        right |= (key[6] << 5) & 0x40
+        right |= (key[5] << 4) & 0x20
+        right |= (key[4] << 3) & 0x10
+        right |= (key[3] << 2) & 0x08
+        right |= (key[2] << 1) & 0x04
+        right |= key[1] & 0x02
 
-        permute = (input_key[0] << 6) & 0x80
-        permute |= (input_key[7] << 5) & 0x40
-        permute |= (input_key[6] << 4) & 0x20
-        permute |= (input_key[5] << 3) & 0x10
-        permute |= (input_key[4] << 2) & 0x08
-        permute |= (input_key[3] << 1) & 0x04
-        permute |= input_key[2] & 0x02
-        working_buffer[5] = permute
+        right |= (key[0] << 6) & 0x80
+        right |= (key[7] << 5) & 0x40
+        right |= (key[6] << 4) & 0x20
+        right |= (key[5] << 3) & 0x10
+        right |= (key[4] << 2) & 0x08
+        right |= (key[3] << 1) & 0x04
+        right |= key[2] & 0x02
 
-        permute = (input_key[1] << 5) & 0x80
-        permute |= (input_key[0] << 4) & 0x40
-        permute |= (input_key[7] << 3) & 0x20
-        permute |= (input_key[6] << 2) & 0x10
-        permute |= (input_key[5] << 1) & 0x08
-        permute |= input_key[4] & 0x04
-        permute |= (input_key[3] >> 1) & 0x02
-        working_buffer[6] = permute
+        right |= (key[1] << 5) & 0x80
+        right |= (key[0] << 4) & 0x40
+        right |= (key[7] << 3) & 0x20
+        right |= (key[6] << 2) & 0x10
+        right |= (key[5] << 1) & 0x08
+        right |= key[4] & 0x04
+        right |= (key[3] >> 1) & 0x02
 
-        permute = (input_key[2] << 4) & 0x80
-        permute |= (input_key[1] << 3) & 0x40
-        permute |= (input_key[0] << 2) & 0x20
-        permute |= (input_key[7] << 1) & 0x10
-        permute |= input_key[6] & 0x08
-        permute |= (input_key[5] >> 1) & 0x04
-        permute |= (input_key[4] >> 2) & 0x02
-        working_buffer[7] = permute
+        right |= (key[2] << 4) & 0x80
+        right |= (key[1] << 3) & 0x40
+        right |= (key[0] << 2) & 0x20
+        right |= (key[7] << 1) & 0x10
+        right |= key[6] & 0x08
+        right |= (key[5] >> 1) & 0x04
+        right |= (key[4] >> 2) & 0x02
 
-        input_key = working_buffer
-
-        return input_key[:4], input_key[4:]
+        return left, right
 
     def _permutation_choice2(self, left: np.ndarray, right: np.ndarray):
         """
@@ -443,18 +435,27 @@ class Des(FeistelCipher):
         key[0] = (key[0] >> rotate_by) | ((temp << reverse_rotate_by) & mask)
         return key
 
-    def split_lr(self, input_data: np.ndarray):
-        half = len(input_data) // 2
-        return input_data[:half], input_data[half:]
+    def split_lr(self, input_data: np.ndarray) -> Tuple[np.uint32, np.uint32]:
+        left = (input_data[0] << 24) | (input_data[1] << 16) | (input_data[2] << 8) | input_data[3]
+        right = (input_data[4] << 24) | (input_data[5] << 16) | (input_data[6] << 8) | input_data[7]
+        return left, right
 
-    def merge_lr(self, left: np.ndarray, right: np.ndarray):
-        return np.append(left, right)
+    def merge_lr(self, left: np.uint32, right: np.uint32) -> np.ndarray:
+        output_data = np.zeros((self.BLOCK_SIZE, ), dtype=np.uint8)
+        output_data[0] = (left >> 24) & 0xFF
+        output_data[1] = (left >> 16) & 0xFF
+        output_data[2] = (left >> 8) & 0xFF
+        output_data[3] = left & 0xFF
+        output_data[4] = (right >> 24) & 0xFF
+        output_data[5] = (right >> 16) & 0xFF
+        output_data[6] = (right >> 8) & 0xFF
+        output_data[7] = right & 0xFF
+        return output_data
 
     def key_schedule(self):
-        self._round_key = np.zeros((self.no_of_rounds, self.BLOCK_SIZE), dtype=self._key.dtype)
+        self._round_key = np.zeros((self.no_of_rounds, 2), dtype=np.uint32)
 
-        key = np.copy(self._key)
-        left, right = self._permutation_choice1(key)
+        left, right = self._permutation_choice1()
         for i in range(self.no_of_rounds):
             right = self._right_rotate(right, self.KEY_SHIFT[i])
             left = self._right_rotate(right, self.KEY_SHIFT[i])
