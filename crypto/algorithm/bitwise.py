@@ -9,7 +9,8 @@ class Bitwise:
 
     @staticmethod
     def xor(a: Union[str, np.ndarray, int, Tuple, List],
-            b: Union[str, np.ndarray, int, Tuple, List]) \
+            b: Union[str, np.ndarray, int, Tuple, List],
+            out: Union[np.ndarray, List] = None) \
             -> Union[str, np.ndarray, int, Tuple, List]:
 
         if type(a) != type(b):
@@ -22,4 +23,4 @@ class Bitwise:
         elif isinstance(a, list):
             raise NotImplementedError('Yet to be implemented... Sorry for the inconvenience')
         elif isinstance(a, np.ndarray):
-            raise NotImplementedError('Yet to be implemented... Sorry for the inconvenience')
+            return np.bitwise_xor(a, b, out=out)

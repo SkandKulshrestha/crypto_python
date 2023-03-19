@@ -59,16 +59,17 @@ class FeistelCipher:
 
         # split the plaintext block into two equal pieces: (L[0], R[0])
         left, right = self.split_lr(output_data)
+        temp = np.zeros(right.shape, dtype=right.dtype)
 
         # for each round i = 0, 1, ..., n; compute
         #   L[i+1] = R[i]
         #   R[i+1] = L[i] ^ F(R[i], K[i])
         # where F be the round function and K[i] be ith sub-key
         for i in range(self.no_of_rounds):
-            temp = right
+            temp[:] = right[:]
             _key = self.get_round_key(i)
             right = Bitwise.xor(left, self.round_function(right, _key))
-            left = temp
+            left[:] = temp[:]
 
         # ciphertext is (R[n], L[n])
         output_data = self.merge_lr(left=right, right=left)

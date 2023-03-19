@@ -3,6 +3,7 @@ import numpy as np
 from enum import IntEnum
 from typing import Optional, Union, Tuple
 from feistel_cipher import FeistelCipher
+from bitwise import Bitwise
 
 
 class DesKeySize(IntEnum):
@@ -12,12 +13,8 @@ class DesKeySize(IntEnum):
 
 
 class Des(FeistelCipher):
-    # TODO: Better approach would be to compute calculation on 32/64 bits value directly
-    # instead of array:
-    # Work to do:
-    # 2023/02/23: change the functionality, verify _permutation_choice1
     BLOCK_SIZE = 8
-    KEY_SHIFT = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
+    KEY_SHIFT = (1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1)
 
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
         super(Des, self).__init__(key=key, no_of_rounds=16)
@@ -137,9 +134,7 @@ class Des(FeistelCipher):
         working_buffer[7] = permute
 
         # now take permute bytes back in input buffer
-        input_data = working_buffer
-
-        return input_data
+        input_data[:] = working_buffer[:]
 
     def _inverse_initial_permutation(self, input_data: np.ndarray):
         """
@@ -245,11 +240,9 @@ class Des(FeistelCipher):
         working_buffer[7] = permute
 
         # now take permute bytes back in input buffer
-        input_data = working_buffer
+        input_data[:] = working_buffer[:]
 
-        return input_data
-
-    def _expansion(self, input_data: np.ndarray):
+    def _expansion(self, input_data: np.uint32) -> np.ndarray:
         """
         Expansion function
 
@@ -305,9 +298,7 @@ class Des(FeistelCipher):
         working_buffer[7] = permute
 
         # now take permute bytes back in input buffer
-        input_data = working_buffer
-
-        return input_data
+        input_data[:] = working_buffer[:]
 
     def _substitution(self, input_data: np.ndarray):
         working_buffer = self._working_buffer
@@ -339,78 +330,50 @@ class Des(FeistelCipher):
         21    13     5    28    20    12     4
         """
         key = self._key
-        left = np.uint32(0)
-        right = np.uint32(0)
+        left, right = 0, 0
 
         # left
-        left |= (key[7]) & 0x80
-        left |= (key[6] >> 2) & 0x40
-        left |= (key[5] >> 3) & 0x20
-        left |= (key[4] >> 4) & 0x10
-        left |= (key[3] >> 5) & 0x08
-        left |= (key[2] >> 6) & 0x04
-        left |= (key[1] >> 7) & 0x02
+        # first 8 bits
+        for i in range(7, -1, -1):
+            left |= (key[i] & 0x80) << (13 + i)
 
-        left |= key[0] & 0x80
-        left |= key[7] & 0x40
-        left |= (key[6] >> 1) & 0x20
-        left |= (key[5] >> 2) & 0x10
-        left |= (key[4] >> 3) & 0x08
-        left |= (key[3] >> 4) & 0x04
-        left |= (key[2] >> 5) & 0x02
+        # next 8 bits
+        for i in range(7, -1, -1):
+            left |= (key[i] & 0x40) << (6 + i)
 
-        left |= (key[1] << 1) & 0x80
-        left |= key[0] & 0x40
-        left |= key[7] & 0x20
-        left |= (key[6] >> 1) & 0x10
-        left |= (key[5] >> 2) & 0x08
-        left |= (key[4] >> 3) & 0x04
-        left |= (key[3] >> 4) & 0x02
+        # next 7 bits
+        for i in range(7, 0, -1):
+            left |= (key[i] & 0x20) << (i - 1)
 
-        left |= (key[2] << 2) & 0x80
-        left |= (key[1] << 1) & 0x40
-        left |= key[0] & 0x20
-        left |= key[7] & 0x10
-        left |= (key[6] >> 1) & 0x08
-        left |= (key[5] >> 2) & 0x04
-        left |= (key[4] >> 3) & 0x02
+        # next 5 bits
+        left |= (key[0] & 0x20) >> 1
+        left |= (key[7] & 0x10) >> 1
+        left |= (key[6] & 0x10) >> 2
+        left |= (key[5] & 0x10) >> 3
+        left |= (key[4] & 0x10) >> 4
 
         # right
-        right |= (key[7] << 6) & 0x80
-        right |= (key[6] << 5) & 0x40
-        right |= (key[5] << 4) & 0x20
-        right |= (key[4] << 3) & 0x10
-        right |= (key[3] << 2) & 0x08
-        right |= (key[2] << 1) & 0x04
-        right |= key[1] & 0x02
+        # first 8 bits
+        for i in range(7, -1, -1):
+            right |= (key[i] & 0x02) << (19 + i)
 
-        right |= (key[0] << 6) & 0x80
-        right |= (key[7] << 5) & 0x40
-        right |= (key[6] << 4) & 0x20
-        right |= (key[5] << 3) & 0x10
-        right |= (key[4] << 2) & 0x08
-        right |= (key[3] << 1) & 0x04
-        right |= key[2] & 0x02
+        # next 8 bits
+        for i in range(7, -1, -1):
+            right |= (key[i] & 0x04) << (10 + i)
 
-        right |= (key[1] << 5) & 0x80
-        right |= (key[0] << 4) & 0x40
-        right |= (key[7] << 3) & 0x20
-        right |= (key[6] << 2) & 0x10
-        right |= (key[5] << 1) & 0x08
-        right |= key[4] & 0x04
-        right |= (key[3] >> 1) & 0x02
+        # next 8 bits
+        for i in range(7, -1, -1):
+            right |= (key[i] & 0x08) << (1 + i)
 
-        right |= (key[2] << 4) & 0x80
-        right |= (key[1] << 3) & 0x40
-        right |= (key[0] << 2) & 0x20
-        right |= (key[7] << 1) & 0x10
-        right |= key[6] & 0x08
-        right |= (key[5] >> 1) & 0x04
-        right |= (key[4] >> 2) & 0x02
+        # next 4 bits
+        right |= (key[3] & 0x10) >> 1
+        right |= (key[2] & 0x10) >> 2
+        right |= (key[1] & 0x10) >> 3
+        right |= (key[0] & 0x10) >> 4
 
-        return left, right
+        return np.uint32(left), np.uint32(right)
 
-    def _permutation_choice2(self, left: np.ndarray, right: np.ndarray):
+    def _permutation_choice2(self, left: np.uint32, right: np.uint32, round_no: int):
         """
         14    17    11    24     1     5
          3    28    15     6    21    10
@@ -421,52 +384,117 @@ class Des(FeistelCipher):
         44    49    39    56    34    53
         46    42    50    36    29    32
         """
-        return np.concatenate((left, right))
+        # for fast access
+        _round_key = self._round_key[round_no]
+
+        result = (left & 0x00004000) >> 9
+        result |= (left & 0x00000800) >> 7
+        result |= (left & 0x00020000) >> 14
+        result |= (left & 0x00000010) >> 2
+        result |= (left & 0x08000000) >> 26
+        result |= (left & 0x00800000) >> 23
+        _round_key[0] = np.uint8(result)
+
+        result = (left & 0x02000000) >> 20
+        result |= (left & 0x00000001) << 4
+        result |= (left & 0x00002000) >> 10
+        result |= (left & 0x00400000) >> 20
+        result |= (left & 0x00000080) >> 6
+        result |= (left & 0x00040000) >> 18
+        _round_key[1] = np.uint8(result)
+
+        result = left & 0x00000020
+        result |= (left & 0x00000200) >> 5
+        result |= (left & 0x00010000) >> 13
+        result |= (left & 0x01000000) >> 22
+        result |= (left & 0x00000004) >> 1
+        result |= (left & 0x00100000) >> 20
+        _round_key[2] = np.uint8(result)
+
+        result = (left & 0x00001000) >> 7
+        result |= (left & 0x00200000) >> 17
+        result |= (left & 0x00000002) << 2
+        result |= (left & 0x00000100) >> 6
+        result |= (left & 0x00008000) >> 14
+        result |= (left & 0x04000000) >> 26
+        _round_key[3] = np.uint8(result)
+
+        result = (right & 0x00008000) >> 10
+        result |= right & 0x00000010
+        result |= (right & 0x02000000) >> 22
+        result |= (right & 0x00080000) >> 17
+        result |= (right & 0x00000200) >> 8
+        result |= (right & 0x00000002) >> 1
+        _round_key[4] = np.uint8(result)
+
+        result = (right & 0x04000000) >> 21
+        result |= (right & 0x00010000) >> 12
+        result |= (right & 0x00000020) >> 2
+        result |= (right & 0x00000800) >> 9
+        result |= (right & 0x00800000) >> 22
+        result |= (right & 0x00000100) >> 8
+        _round_key[5] = np.uint8(result)
+
+        result = (right & 0x00001000) >> 7
+        result |= (right & 0x00000080) >> 3
+        result |= (right & 0x00020000) >> 14
+        result |= (right & 0x00000001) << 2
+        result |= (right & 0x00400000) >> 21
+        result |= (right & 0x00000008) >> 3
+        _round_key[6] = np.uint8(result)
+
+        result = (right & 0x00000400) >> 5
+        result |= (right & 0x00004000) >> 10
+        result |= (right & 0x00000040) >> 3
+        result |= (right & 0x00100000) >> 18
+        result |= (right & 0x08000000) >> 26
+        result |= (right & 0x01000000) >> 24
+        _round_key[7] = np.uint8(result)
 
     @staticmethod
-    def _right_rotate(key: np.ndarray, rotate_by: int):
-        temp = key[3] & 0x01
-        reverse_rotate_by = 8 - rotate_by
-        mask = int('1' * rotate_by, 2)
-        mask = mask << reverse_rotate_by
-        key[3] = (key[3] >> rotate_by) | ((key[2] << reverse_rotate_by) & mask)
-        key[2] = (key[2] >> rotate_by) | ((key[1] << reverse_rotate_by) & mask)
-        key[1] = (key[1] >> rotate_by) | ((key[0] << reverse_rotate_by) & mask)
-        key[0] = (key[0] >> rotate_by) | ((temp << reverse_rotate_by) & mask)
-        return key
+    def _left_circular_rotate(key: np.uint32, rotate_by: int) -> np.uint32:
+        while rotate_by:
+            lsb = (key >> 27) & 0x01
+            key = (key << 1) | lsb
+            rotate_by -= 1
+        key &= 0x0FFFFFFF
+        return np.uint32(key)
 
-    def split_lr(self, input_data: np.ndarray) -> Tuple[np.uint32, np.uint32]:
-        left = (input_data[0] << 24) | (input_data[1] << 16) | (input_data[2] << 8) | input_data[3]
-        right = (input_data[4] << 24) | (input_data[5] << 16) | (input_data[6] << 8) | input_data[7]
+    def split_lr(self, input_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        half = self.BLOCK_SIZE >> 1
+
+        left = np.zeros(input_data.shape, dtype=input_data.dtype)
+        left[:half] = input_data[:half]
+
+        right = np.zeros(input_data.shape, dtype=input_data.dtype)
+        right[:half] = input_data[half:]
+
         return left, right
 
-    def merge_lr(self, left: np.uint32, right: np.uint32) -> np.ndarray:
-        output_data = np.zeros((self.BLOCK_SIZE, ), dtype=np.uint8)
-        output_data[0] = (left >> 24) & 0xFF
-        output_data[1] = (left >> 16) & 0xFF
-        output_data[2] = (left >> 8) & 0xFF
-        output_data[3] = left & 0xFF
-        output_data[4] = (right >> 24) & 0xFF
-        output_data[5] = (right >> 16) & 0xFF
-        output_data[6] = (right >> 8) & 0xFF
-        output_data[7] = right & 0xFF
-        return output_data
+    def merge_lr(self, left: np.ndarray, right: np.ndarray) -> np.ndarray:
+        half = self.BLOCK_SIZE >> 1
+
+        # copy data of right into left
+        left[half:] = right[:half]
+
+        return left
 
     def key_schedule(self):
-        self._round_key = np.zeros((self.no_of_rounds, 2), dtype=np.uint32)
+        self._round_key = np.zeros((self.no_of_rounds, self.BLOCK_SIZE), dtype=np.uint8)
 
         left, right = self._permutation_choice1()
         for i in range(self.no_of_rounds):
-            right = self._right_rotate(right, self.KEY_SHIFT[i])
-            left = self._right_rotate(right, self.KEY_SHIFT[i])
-            self._round_key[i] = self._permutation_choice2(left, right)
+            right = self._left_circular_rotate(right, self.KEY_SHIFT[i])
+            left = self._left_circular_rotate(left, self.KEY_SHIFT[i])
+            self._permutation_choice2(left, right, i)
 
-    def round_function(self, right: np.ndarray, key: np.ndarray):
+    def round_function(self, right: np.uint32, key: np.ndarray):
         # expansion
-        right = self._expansion(right)
-        right = np.bitwise_xor(right, key)
-        right = self._substitution(right)
-        right = self._permutation(right)
+        self._expansion(right)
+        Bitwise.xor(right, key, out=right)
+        self._substitution(right)
+        self._permutation(right)
+
         return right
 
     def set_key(self, key: Union[str, np.ndarray]):
@@ -488,66 +516,18 @@ class Des(FeistelCipher):
         for i in range(no_of_blocks):
             _start = i * no_of_blocks
             _end = _start + self.BLOCK_SIZE
-            output_data[_start: _end] = self._initial_permutation(output_data[_start: _end])
+            self._initial_permutation(output_data[_start: _end])
             output_data[_start: _end] = super(Des, self).encrypt(output_data[_start: _end])
-            output_data[_start: _end] = self._inverse_initial_permutation(output_data[_start: _end])
+            self._inverse_initial_permutation(output_data[_start: _end])
 
         return output_data
 
 
 if __name__ == '__main__':
-    # Plain Text: 123456ABCD132536
-    # Key : AABB09182736CCDD
-    #
-    # Encryption
-    #
-    # After initial permutation: 14A7D67818CA18AD
-    # After splitting: L0=14A7D678 R0=18CA18AD
-    #
-    # Round 1 18CA18AD 5A78E394 194CD072DE8C
-    # Round 2 5A78E394 4A1210F6 4568581ABCCE
-    # Round 3 4A1210F6 B8089591 06EDA4ACF5B5
-    # Round 4 B8089591 236779C2 DA2D032B6EE3
-    # Round 5 236779C2 A15A4B87 69A629FEC913
-    # Round 6 A15A4B87 2E8F9C65 C1948E87475E
-    # Round 7 2E8F9C65 A9FC20A3 708AD2DDB3C0
-    # Round 8 A9FC20A3 308BEE97 34F822F0C66D
-    # Round 9 308BEE97 10AF9D37 84BB4473DCCC
-    # Round 10 10AF9D37 6CA6CB20 02765708B5BF
-    # Round 11 6CA6CB20 FF3C485F 6D5560AF7CA5
-    # Round 12 FF3C485F 22A5963B C2C1E96A4BF3
-    # Round 13 22A5963B 387CCDAA 99C31397C91F
-    # Round 14 387CCDAA BD2DD2AB 251B8BC717D0
-    # Round 15 BD2DD2AB CF26B472 3330C5D9A36D
-    # Round 16 19BA9212 CF26B472 181C5D75C66D
-    #
-    # Cipher Text: C0B7A8D05F3A829C
-    #
-    # Decryption
-    #
-    # After initial permutation: 19BA9212CF26B472
-    # After splitting: L0=19BA9212 R0=CF26B472
-    #
-    # Round 1 CF26B472 BD2DD2AB 181C5D75C66D
-    # Round 2 BD2DD2AB 387CCDAA 3330C5D9A36D
-    # Round 3 387CCDAA 22A5963B 251B8BC717D0
-    # Round 4 22A5963B FF3C485F 99C31397C91F
-    # Round 5 FF3C485F 6CA6CB20 C2C1E96A4BF3
-    # Round 6 6CA6CB20 10AF9D37 6D5560AF7CA5
-    # Round 7 10AF9D37 308BEE97 02765708B5BF
-    # Round 8 308BEE97 A9FC20A3 84BB4473DCCC
-    # Round 9 A9FC20A3 2E8F9C65 34F822F0C66D
-    # Round 10 2E8F9C65 A15A4B87 708AD2DDB3C0
-    # Round 11 A15A4B87 236779C2 C1948E87475E
-    # Round 12 236779C2 B8089591 69A629FEC913
-    # Round 13 B8089591 4A1210F6 DA2D032B6EE3
-    # Round 14 4A1210F6 5A78E394 06EDA4ACF5B5
-    # Round 15 5A78E394 18CA18AD 4568581ABCCE
-    # Round 16 14A7D678 18CA18AD 194CD072DE8C
-    #
-    # Plain Text: 123456ABCD132536
-    _key = 'AABB09182736CCDD'
-    _input_data = '123456ABCD132536'
+    # refer: https://page.math.tu-berlin.de/~kant/teaching/hess/krypto-ws2006/
+    # des.htm#:~:text=DES%20works%20by%20encrypting%20groups,key%20size%20is%2056%20bits.
+    _key = '133457799BBCDFF1'
+    _input_data = '0123456789ABCDEF'
     des = Des()
     des.set_key(_key)
     _output_data = des.encrypt(_input_data)
