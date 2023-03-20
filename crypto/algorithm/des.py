@@ -14,10 +14,76 @@ class DesKeySize(IntEnum):
 
 class Des(FeistelCipher):
     BLOCK_SIZE = 8
+    NO_OF_ROUNDS = 16
     KEY_SHIFT = (1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1)
+    S_BOXES = (
+        # S1
+        (
+            (0x0E, 0x04, 0x0D, 0x01, 0x02, 0x0F, 0x0B, 0x08, 0x03, 0x0A, 0x06, 0x0C, 0x05, 0x09, 0x00, 0x07),
+            (0x00, 0x0F, 0x07, 0x04, 0x0E, 0x02, 0x0D, 0x01, 0x0A, 0x06, 0x0C, 0x0B, 0x09, 0x05, 0x03, 0x08),
+            (0x04, 0x01, 0x0E, 0x08, 0x0D, 0x06, 0x02, 0x0B, 0x0F, 0x0C, 0x09, 0x07, 0x03, 0x0A, 0x05, 0x00),
+            (0x0F, 0x0C, 0x08, 0x02, 0x04, 0x09, 0x01, 0x07, 0x05, 0x0B, 0x03, 0x0E, 0x0A, 0x00, 0x06, 0x0D),
+        ),
+
+        # S2
+        (
+            (0x0F, 0x01, 0x08, 0x0E, 0x06, 0x0B, 0x03, 0x04, 0x09, 0x07, 0x02, 0x0D, 0x0C, 0x00, 0x05, 0x0A),
+            (0x03, 0x0D, 0x04, 0x07, 0x0F, 0x02, 0x08, 0x0E, 0x0C, 0x00, 0x01, 0x0A, 0x06, 0x09, 0x0B, 0x05),
+            (0x00, 0x0E, 0x07, 0x0B, 0x0A, 0x04, 0x0D, 0x01, 0x05, 0x08, 0x0C, 0x06, 0x09, 0x03, 0x02, 0x0F),
+            (0x0D, 0x08, 0x0A, 0x01, 0x03, 0x0F, 0x04, 0x02, 0x0B, 0x06, 0x07, 0x0C, 0x00, 0x05, 0x0E, 0x09),
+        ),
+
+        # S3
+        (
+            (0x0A, 0x00, 0x09, 0x0E, 0x06, 0x03, 0x0F, 0x05, 0x01, 0x0D, 0x0C, 0x07, 0x0B, 0x04, 0x02, 0x08),
+            (0x0D, 0x07, 0x00, 0x09, 0x03, 0x04, 0x06, 0x0A, 0x02, 0x08, 0x05, 0x0E, 0x0C, 0x0B, 0x0F, 0x01),
+            (0x0D, 0x06, 0x04, 0x09, 0x08, 0x0F, 0x03, 0x00, 0x0B, 0x01, 0x02, 0x0C, 0x05, 0x0A, 0x0E, 0x07),
+            (0x01, 0x0A, 0x0D, 0x00, 0x06, 0x09, 0x08, 0x07, 0x04, 0x0F, 0x0E, 0x03, 0x0B, 0x05, 0x02, 0x0C),
+        ),
+
+        # S4
+        (
+            (0x07, 0x0D, 0x0E, 0x03, 0x00, 0x06, 0x09, 0x0A, 0x01, 0x02, 0x08, 0x05, 0x0B, 0x0C, 0x04, 0x0F),
+            (0x0D, 0x08, 0x0B, 0x05, 0x06, 0x0F, 0x00, 0x03, 0x04, 0x07, 0x02, 0x0C, 0x01, 0x0A, 0x0E, 0x09),
+            (0x0A, 0x06, 0x09, 0x00, 0x0C, 0x0B, 0x07, 0x0D, 0x0F, 0x01, 0x03, 0x0E, 0x05, 0x02, 0x08, 0x04),
+            (0x03, 0x0F, 0x00, 0x06, 0x0A, 0x01, 0x0D, 0x08, 0x09, 0x04, 0x05, 0x0B, 0x0C, 0x07, 0x02, 0x0E),
+        ),
+
+        # S5
+        (
+            (0x02, 0x0C, 0x04, 0x01, 0x07, 0x0A, 0x0B, 0x06, 0x08, 0x05, 0x03, 0x0F, 0x0D, 0x00, 0x0E, 0x09),
+            (0x0E, 0x0B, 0x02, 0x0C, 0x04, 0x07, 0x0D, 0x01, 0x05, 0x00, 0x0F, 0x0A, 0x03, 0x09, 0x08, 0x06),
+            (0x04, 0x02, 0x01, 0x0B, 0x0A, 0x0D, 0x07, 0x08, 0x0F, 0x09, 0x0C, 0x05, 0x06, 0x03, 0x00, 0x0E),
+            (0x0B, 0x08, 0x0C, 0x07, 0x01, 0x0E, 0x02, 0x0D, 0x06, 0x0F, 0x00, 0x09, 0x0A, 0x04, 0x05, 0x03),
+        ),
+
+        # S6
+        (
+            (0x0C, 0x01, 0x0A, 0x0F, 0x09, 0x02, 0x06, 0x08, 0x00, 0x0D, 0x03, 0x04, 0x0E, 0x07, 0x05, 0x0B),
+            (0x0A, 0x0F, 0x04, 0x02, 0x07, 0x0C, 0x09, 0x05, 0x06, 0x01, 0x0D, 0x0E, 0x00, 0x0B, 0x03, 0x08),
+            (0x09, 0x0E, 0x0F, 0x05, 0x02, 0x08, 0x0C, 0x03, 0x07, 0x00, 0x04, 0x0A, 0x01, 0x0D, 0x0B, 0x06),
+            (0x04, 0x03, 0x02, 0x0C, 0x09, 0x05, 0x0F, 0x0A, 0x0B, 0x0E, 0x01, 0x07, 0x06, 0x00, 0x08, 0x0D),
+        ),
+
+        # S7
+        (
+            (0x04, 0x0B, 0x02, 0x0E, 0x0F, 0x00, 0x08, 0x0D, 0x03, 0x0C, 0x09, 0x07, 0x05, 0x0A, 0x06, 0x01),
+            (0x0D, 0x00, 0x0B, 0x07, 0x04, 0x09, 0x01, 0x0A, 0x0E, 0x03, 0x05, 0x0C, 0x02, 0x0F, 0x08, 0x06),
+            (0x01, 0x04, 0x0B, 0x0D, 0x0C, 0x03, 0x07, 0x0E, 0x0A, 0x0F, 0x06, 0x08, 0x00, 0x05, 0x09, 0x02),
+            (0x06, 0x0B, 0x0D, 0x08, 0x01, 0x04, 0x0A, 0x07, 0x09, 0x05, 0x00, 0x0F, 0x0E, 0x02, 0x03, 0x0C),
+        ),
+
+        # S8
+        (
+            (0x0D, 0x02, 0x08, 0x04, 0x06, 0x0F, 0x0B, 0x01, 0x0A, 0x09, 0x03, 0x0E, 0x05, 0x00, 0x0C, 0x07),
+            (0x01, 0x0F, 0x0D, 0x08, 0x0A, 0x03, 0x07, 0x04, 0x0C, 0x05, 0x06, 0x0B, 0x00, 0x0E, 0x09, 0x02),
+            (0x07, 0x0B, 0x04, 0x01, 0x09, 0x0C, 0x0E, 0x02, 0x00, 0x06, 0x0A, 0x0D, 0x0F, 0x03, 0x05, 0x08),
+            (0x02, 0x01, 0x0E, 0x07, 0x04, 0x0A, 0x08, 0x0D, 0x0F, 0x0C, 0x09, 0x00, 0x03, 0x05, 0x06, 0x0B),
+        )
+    )
 
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(Des, self).__init__(key=key, no_of_rounds=16)
+        super(Des, self).__init__(key=key)
 
         if self._key is not None:
             self._validate_key()
@@ -242,7 +308,7 @@ class Des(FeistelCipher):
         # now take permute bytes back in input buffer
         input_data[:] = working_buffer[:]
 
-    def _expansion(self, input_data: np.uint32) -> np.ndarray:
+    def _expansion(self, input_data: np.ndarray):
         """
         Expansion function
 
@@ -258,63 +324,113 @@ class Des(FeistelCipher):
         working_buffer = self._working_buffer
 
         # compute 1st byte,
-        permute = (input_data[3] << 7) & 0x80
-        permute |= (input_data[0] >> 1) & 0x7C
+        permute = (input_data[3] << 5) & 0x20
+        permute |= (input_data[0] >> 3) & 0x1F
         working_buffer[0] = permute
 
         # then 2nd byte,
-        permute = (input_data[0] << 3) & 0xF8
-        permute |= (input_data[1] >> 5) & 0x04
+        permute = (input_data[0] << 1) & 0x3E
+        permute |= (input_data[1] >> 7) & 0x01
         working_buffer[1] = permute
 
         # then 3rd byte,
-        permute = (input_data[0] << 7) & 0x80
-        permute |= (input_data[1] >> 1) & 0x7C
+        permute = (input_data[0] << 5) & 0x20
+        permute |= (input_data[1] >> 3) & 0x1F
         working_buffer[2] = permute
 
         # then 4th byte,
-        permute = (input_data[1] << 3) & 0xF8
-        permute |= (input_data[2] >> 5) & 0x04
+        permute = (input_data[1] << 1) & 0x3E
+        permute |= (input_data[2] >> 7) & 0x01
         working_buffer[3] = permute
 
         # then 5th byte,
-        permute = (input_data[1] << 7) & 0x80
-        permute |= (input_data[2] >> 1) & 0x7C
+        permute = (input_data[1] << 5) & 0x20
+        permute |= (input_data[2] >> 3) & 0x1F
         working_buffer[4] = permute
 
         # then 6th byte,
-        permute = (input_data[2] << 3) & 0xF8
-        permute |= (input_data[3] >> 5) & 0x04
+        permute = (input_data[2] << 1) & 0x3E
+        permute |= (input_data[3] >> 7) & 0x01
         working_buffer[5] = permute
 
         # then 7th byte,
-        permute = (input_data[2] << 7) & 0x80
-        permute |= (input_data[3] >> 1) & 0x7C
+        permute = (input_data[2] << 5) & 0x20
+        permute |= (input_data[3] >> 3) & 0x1F
         working_buffer[6] = permute
 
         # and the last, i.e., 8th byte,
-        permute = (input_data[3] << 3) & 0xF8
-        permute |= (input_data[0] >> 5) & 0x04
+        permute = (input_data[3] << 1) & 0x3E
+        permute |= (input_data[0] >> 7) & 0x01
         working_buffer[7] = permute
 
         # now take permute bytes back in input buffer
         input_data[:] = working_buffer[:]
 
     def _substitution(self, input_data: np.ndarray):
-        working_buffer = self._working_buffer
-
-        # now take permute bytes back in input buffer
-        input_data = working_buffer[:4]
-
-        return input_data
+        for i in range(self.BLOCK_SIZE):
+            _s = self.S_BOXES[i]
+            row = ((input_data[i] & 0x20) >> 4) | (input_data[i] & 0x01)
+            col = (input_data[i] & 0x1E) >> 1
+            input_data[i] = _s[row][col]
 
     def _permutation(self, input_data: np.ndarray):
+        """
+        Permutation shuffles the bits of a 32-bit half-block
+
+        16	7	20	21	29	12	28	17
+        1	15	23	26	5	18	31	10
+        2	8	24	14	32	27	3	9
+        19	13	30	6	22	11	4	25
+        """
         working_buffer = self._working_buffer
 
-        # now take permute bytes back in input buffer
-        input_data = working_buffer[:4]
+        permute = (input_data[3] & 0x01) << 7
+        permute |= (input_data[1] & 0x02) << 5
+        permute |= (input_data[4] & 0x01) << 5
+        permute |= (input_data[5] & 0x08) << 1
+        permute |= input_data[7] & 0x08
+        permute |= (input_data[2] & 0x01) << 2
+        permute |= (input_data[6] & 0x01) << 1
+        permute |= (input_data[4] & 0x08) >> 3
+        working_buffer[0] = permute
 
-        return input_data
+        permute = (input_data[0] & 0x08) << 4
+        permute |= (input_data[3] & 0x02) << 5
+        permute |= (input_data[5] & 0x02) << 4
+        permute |= (input_data[6] & 0x04) << 2
+        permute |= input_data[1] & 0x08
+        permute |= input_data[4] & 0x04
+        permute |= input_data[7] & 0x02
+        permute |= (input_data[2] & 0x04) >> 2
+        working_buffer[1] = permute
+
+        permute = (input_data[0] & 0x04) << 5
+        permute |= (input_data[1] & 0x01) << 6
+        permute |= (input_data[5] & 0x01) << 5
+        permute |= (input_data[3] & 0x04) << 2
+        permute |= (input_data[7] & 0x01) << 3
+        permute |= (input_data[6] & 0x02) << 1
+        permute |= input_data[0] & 0x02
+        permute |= (input_data[2] & 0x08) >> 3
+        working_buffer[2] = permute
+
+        permute = (input_data[4] & 0x02) << 6
+        permute |= (input_data[3] & 0x08) << 3
+        permute |= (input_data[7] & 0x04) << 3
+        permute |= (input_data[1] & 0x04) << 2
+        permute |= (input_data[5] & 0x04) << 1
+        permute |= (input_data[2] & 0x02) << 1
+        permute |= (input_data[0] & 0x01) << 1
+        permute |= (input_data[6] & 0x08) >> 3
+        working_buffer[3] = permute
+
+        working_buffer[4] = 0
+        working_buffer[5] = 0
+        working_buffer[6] = 0
+        working_buffer[7] = 0
+
+        # now take permute bytes back in input buffer
+        input_data[:] = working_buffer[:]
 
     def _permutation_choice1(self) -> Tuple[np.uint32, np.uint32]:
         """
@@ -480,15 +596,15 @@ class Des(FeistelCipher):
         return left
 
     def key_schedule(self):
-        self._round_key = np.zeros((self.no_of_rounds, self.BLOCK_SIZE), dtype=np.uint8)
+        self._round_key = np.zeros((self.NO_OF_ROUNDS, self.BLOCK_SIZE), dtype=np.uint8)
 
         left, right = self._permutation_choice1()
-        for i in range(self.no_of_rounds):
+        for i in range(self.NO_OF_ROUNDS):
             right = self._left_circular_rotate(right, self.KEY_SHIFT[i])
             left = self._left_circular_rotate(left, self.KEY_SHIFT[i])
             self._permutation_choice2(left, right, i)
 
-    def round_function(self, right: np.uint32, key: np.ndarray):
+    def round_function(self, right: np.ndarray, key: np.ndarray):
         # expansion
         self._expansion(right)
         Bitwise.xor(right, key, out=right)
@@ -520,6 +636,34 @@ class Des(FeistelCipher):
             output_data[_start: _end] = super(Des, self).encrypt(output_data[_start: _end])
             self._inverse_initial_permutation(output_data[_start: _end])
 
+        if isinstance(input_data, str):
+            output_data = bytes(output_data).hex().upper()
+
+        return output_data
+
+    def decrypt(self, input_data: Union[str, np.ndarray]):
+        if isinstance(input_data, str):
+            output_data = np.array(bytearray.fromhex(input_data))
+        elif isinstance(input_data, np.ndarray):
+            output_data = np.copy(input_data)
+        else:
+            raise ValueError('Invalid input')
+
+        if len(output_data) % self.BLOCK_SIZE:
+            raise ValueError(f'Input data is not multiple of block length ({self.BLOCK_SIZE} bytes)')
+
+        no_of_blocks = len(output_data) // self.BLOCK_SIZE
+
+        for i in range(no_of_blocks):
+            _start = i * no_of_blocks
+            _end = _start + self.BLOCK_SIZE
+            self._initial_permutation(output_data[_start: _end])
+            output_data[_start: _end] = super(Des, self).decrypt(output_data[_start: _end])
+            self._inverse_initial_permutation(output_data[_start: _end])
+
+        if isinstance(input_data, str):
+            output_data = bytes(output_data).hex().upper()
+
         return output_data
 
 
@@ -528,9 +672,84 @@ if __name__ == '__main__':
     # des.htm#:~:text=DES%20works%20by%20encrypting%20groups,key%20size%20is%2056%20bits.
     _key = '133457799BBCDFF1'
     _input_data = '0123456789ABCDEF'
+    print('Scenario 1')
+    print(f'Key {_key}')
+    print(f'Plaintext {_input_data}')
     des = Des()
     des.set_key(_key)
     _output_data = des.encrypt(_input_data)
-    print(_output_data)
-    # if _output_data != 'C0B7A8D05F3A829C':
-    #     raise RuntimeError('Des encryption fails')
+    print(f'Ciphertext {_output_data}')
+    if _output_data != '85E813540F0AB405':
+        raise RuntimeError('Des encryption fails')
+
+    _output_data = des.decrypt(_output_data)
+    print(f'Plaintext {_output_data}')
+    if _output_data != _input_data:
+        raise RuntimeError('Des decryption fails')
+
+    # Plain Text: 123456ABCD132536
+    # Key : AABB09182736CCDD
+    #
+    # Encryption
+    #
+    # After initial permutation: 14A7D67818CA18AD
+    # After splitting: L0=14A7D678 R0=18CA18AD
+    #
+    # Round 1 18CA18AD 5A78E394 194CD072DE8C
+    # Round 2 5A78E394 4A1210F6 4568581ABCCE
+    # Round 3 4A1210F6 B8089591 06EDA4ACF5B5
+    # Round 4 B8089591 236779C2 DA2D032B6EE3
+    # Round 5 236779C2 A15A4B87 69A629FEC913
+    # Round 6 A15A4B87 2E8F9C65 C1948E87475E
+    # Round 7 2E8F9C65 A9FC20A3 708AD2DDB3C0
+    # Round 8 A9FC20A3 308BEE97 34F822F0C66D
+    # Round 9 308BEE97 10AF9D37 84BB4473DCCC
+    # Round 10 10AF9D37 6CA6CB20 02765708B5BF
+    # Round 11 6CA6CB20 FF3C485F 6D5560AF7CA5
+    # Round 12 FF3C485F 22A5963B C2C1E96A4BF3
+    # Round 13 22A5963B 387CCDAA 99C31397C91F
+    # Round 14 387CCDAA BD2DD2AB 251B8BC717D0
+    # Round 15 BD2DD2AB CF26B472 3330C5D9A36D
+    # Round 16 19BA9212 CF26B472 181C5D75C66D
+    #
+    # Cipher Text: C0B7A8D05F3A829C
+    #
+    # Decryption
+    #
+    # After initial permutation: 19BA9212CF26B472
+    # After splitting: L0=19BA9212 R0=CF26B472
+    #
+    # Round 1 CF26B472 BD2DD2AB 181C5D75C66D
+    # Round 2 BD2DD2AB 387CCDAA 3330C5D9A36D
+    # Round 3 387CCDAA 22A5963B 251B8BC717D0
+    # Round 4 22A5963B FF3C485F 99C31397C91F
+    # Round 5 FF3C485F 6CA6CB20 C2C1E96A4BF3
+    # Round 6 6CA6CB20 10AF9D37 6D5560AF7CA5
+    # Round 7 10AF9D37 308BEE97 02765708B5BF
+    # Round 8 308BEE97 A9FC20A3 84BB4473DCCC
+    # Round 9 A9FC20A3 2E8F9C65 34F822F0C66D
+    # Round 10 2E8F9C65 A15A4B87 708AD2DDB3C0
+    # Round 11 A15A4B87 236779C2 C1948E87475E
+    # Round 12 236779C2 B8089591 69A629FEC913
+    # Round 13 B8089591 4A1210F6 DA2D032B6EE3
+    # Round 14 4A1210F6 5A78E394 06EDA4ACF5B5
+    # Round 15 5A78E394 18CA18AD 4568581ABCCE
+    # Round 16 14A7D678 18CA18AD 194CD072DE8C
+    #
+    # Plain Text: 123456ABCD132536
+    _key = 'AABB09182736CCDD'
+    _input_data = '123456ABCD132536'
+    print('\nScenario 2')
+    print(f'Key {_key}')
+    print(f'Plaintext {_input_data}')
+    des = Des()
+    des.set_key(_key)
+    _output_data = des.encrypt(_input_data)
+    print(f'Ciphertext {_output_data}')
+    if _output_data != 'C0B7A8D05F3A829C':
+        raise RuntimeError('Des encryption fails')
+
+    _output_data = des.decrypt(_output_data)
+    print(f'Plaintext {_output_data}')
+    if _output_data != _input_data:
+        raise RuntimeError('Des decryption fails')
