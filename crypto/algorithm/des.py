@@ -2,19 +2,19 @@ import numpy as np
 
 from enum import IntEnum
 from typing import Optional, Union, Tuple
-from feistel_cipher import FeistelCipher
+from utility import Utility
 from bitwise import Bitwise
+from feistel_cipher import FeistelCipher
 
 
 class DesKeySize(IntEnum):
-    ONE_KEY = 8,
-    TWO_KEY = 16,
-    THREE_KEY = 24
+    DES_64_BIT_KEY = 8,
+    DES_128_BIT_KEY = 16,
+    DES_192_BIT_KEY = 24
 
 
 class Des(FeistelCipher):
     BLOCK_SIZE = 8
-    NO_OF_ROUNDS = 16
     KEY_SHIFT = (1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1)
     S_BOXES = (
         # S1
@@ -83,10 +83,7 @@ class Des(FeistelCipher):
     )
 
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(Des, self).__init__(key=key)
-
-        if self._key is not None:
-            self._validate_key()
+        super(Des, self).__init__(key=key, no_of_rounds=16)
 
         self._working_buffer = np.zeros((self.BLOCK_SIZE,), dtype=np.uint8)
 
@@ -96,7 +93,7 @@ class Des(FeistelCipher):
         except ValueError:
             raise ValueError(f'{len(self._key)} is not a valid key size')
 
-    def _initial_permutation(self, input_data: np.ndarray):
+    def _initial_permutation(self, buffer: np.ndarray):
         """
         Initial Permutation
 
@@ -112,97 +109,97 @@ class Des(FeistelCipher):
         working_buffer = self._working_buffer
 
         # compute 1st byte,
-        permute = (input_data[7] << 1) & 0x80
-        permute |= input_data[6] & 0x40
-        permute |= (input_data[5] >> 1) & 0x20
-        permute |= (input_data[4] >> 2) & 0x10
-        permute |= (input_data[3] >> 3) & 0x08
-        permute |= (input_data[2] >> 4) & 0x04
-        permute |= (input_data[1] >> 5) & 0x02
-        permute |= (input_data[0] >> 6) & 0x01
+        permute = (buffer[7] << 1) & 0x80
+        permute |= buffer[6] & 0x40
+        permute |= (buffer[5] >> 1) & 0x20
+        permute |= (buffer[4] >> 2) & 0x10
+        permute |= (buffer[3] >> 3) & 0x08
+        permute |= (buffer[2] >> 4) & 0x04
+        permute |= (buffer[1] >> 5) & 0x02
+        permute |= (buffer[0] >> 6) & 0x01
         working_buffer[0] = permute
 
         # then 2nd byte,
-        permute = (input_data[7] << 3) & 0x80
-        permute |= (input_data[6] << 2) & 0x40
-        permute |= (input_data[5] << 1) & 0x20
-        permute |= input_data[4] & 0x10
-        permute |= (input_data[3] >> 1) & 0x08
-        permute |= (input_data[2] >> 2) & 0x04
-        permute |= (input_data[1] >> 3) & 0x02
-        permute |= (input_data[0] >> 4) & 0x01
+        permute = (buffer[7] << 3) & 0x80
+        permute |= (buffer[6] << 2) & 0x40
+        permute |= (buffer[5] << 1) & 0x20
+        permute |= buffer[4] & 0x10
+        permute |= (buffer[3] >> 1) & 0x08
+        permute |= (buffer[2] >> 2) & 0x04
+        permute |= (buffer[1] >> 3) & 0x02
+        permute |= (buffer[0] >> 4) & 0x01
         working_buffer[1] = permute
 
         # then 3rd byte,
-        permute = (input_data[7] << 5) & 0x80
-        permute |= (input_data[6] << 4) & 0x40
-        permute |= (input_data[5] >> 3) & 0x20
-        permute |= (input_data[4] << 2) & 0x10
-        permute |= (input_data[3] << 1) & 0x08
-        permute |= input_data[2] & 0x04
-        permute |= (input_data[1] >> 1) & 0x02
-        permute |= (input_data[0] >> 2) & 0x01
+        permute = (buffer[7] << 5) & 0x80
+        permute |= (buffer[6] << 4) & 0x40
+        permute |= (buffer[5] >> 3) & 0x20
+        permute |= (buffer[4] << 2) & 0x10
+        permute |= (buffer[3] << 1) & 0x08
+        permute |= buffer[2] & 0x04
+        permute |= (buffer[1] >> 1) & 0x02
+        permute |= (buffer[0] >> 2) & 0x01
         working_buffer[2] = permute
 
         # then 4th byte,
-        permute = (input_data[7] << 7) & 0x80
-        permute |= (input_data[6] << 6) & 0x40
-        permute |= (input_data[5] << 5) & 0x20
-        permute |= (input_data[4] << 4) & 0x10
-        permute |= (input_data[3] << 3) & 0x08
-        permute |= (input_data[2] << 2) & 0x04
-        permute |= (input_data[1] << 1) & 0x02
-        permute |= input_data[0] & 0x01
+        permute = (buffer[7] << 7) & 0x80
+        permute |= (buffer[6] << 6) & 0x40
+        permute |= (buffer[5] << 5) & 0x20
+        permute |= (buffer[4] << 4) & 0x10
+        permute |= (buffer[3] << 3) & 0x08
+        permute |= (buffer[2] << 2) & 0x04
+        permute |= (buffer[1] << 1) & 0x02
+        permute |= buffer[0] & 0x01
         working_buffer[3] = permute
 
         # then 5th byte,
-        permute = input_data[7] & 0x80
-        permute |= (input_data[6] >> 1) & 0x40
-        permute |= (input_data[5] >> 2) & 0x20
-        permute |= (input_data[4] >> 3) & 0x10
-        permute |= (input_data[3] >> 4) & 0x08
-        permute |= (input_data[2] >> 5) & 0x04
-        permute |= (input_data[1] >> 6) & 0x02
-        permute |= (input_data[0] >> 7) & 0x01
+        permute = buffer[7] & 0x80
+        permute |= (buffer[6] >> 1) & 0x40
+        permute |= (buffer[5] >> 2) & 0x20
+        permute |= (buffer[4] >> 3) & 0x10
+        permute |= (buffer[3] >> 4) & 0x08
+        permute |= (buffer[2] >> 5) & 0x04
+        permute |= (buffer[1] >> 6) & 0x02
+        permute |= (buffer[0] >> 7) & 0x01
         working_buffer[4] = permute
 
         # then 6th byte,
-        permute = (input_data[7] << 2) & 0x80
-        permute |= (input_data[6] << 1) & 0x40
-        permute |= input_data[5] & 0x20
-        permute |= (input_data[4] >> 1) & 0x10
-        permute |= (input_data[3] >> 2) & 0x08
-        permute |= (input_data[2] >> 3) & 0x04
-        permute |= (input_data[1] >> 4) & 0x02
-        permute |= (input_data[0] >> 5) & 0x01
+        permute = (buffer[7] << 2) & 0x80
+        permute |= (buffer[6] << 1) & 0x40
+        permute |= buffer[5] & 0x20
+        permute |= (buffer[4] >> 1) & 0x10
+        permute |= (buffer[3] >> 2) & 0x08
+        permute |= (buffer[2] >> 3) & 0x04
+        permute |= (buffer[1] >> 4) & 0x02
+        permute |= (buffer[0] >> 5) & 0x01
         working_buffer[5] = permute
 
         # then 7th byte,
-        permute = (input_data[7] << 4) & 0x80
-        permute |= (input_data[6] << 3) & 0x40
-        permute |= (input_data[5] << 2) & 0x20
-        permute |= (input_data[4] << 1) & 0x10
-        permute |= input_data[3] & 0x08
-        permute |= (input_data[2] >> 1) & 0x04
-        permute |= (input_data[1] >> 2) & 0x02
-        permute |= (input_data[0] >> 3) & 0x01
+        permute = (buffer[7] << 4) & 0x80
+        permute |= (buffer[6] << 3) & 0x40
+        permute |= (buffer[5] << 2) & 0x20
+        permute |= (buffer[4] << 1) & 0x10
+        permute |= buffer[3] & 0x08
+        permute |= (buffer[2] >> 1) & 0x04
+        permute |= (buffer[1] >> 2) & 0x02
+        permute |= (buffer[0] >> 3) & 0x01
         working_buffer[6] = permute
 
         # and the last, i.e., 8th byte
-        permute = (input_data[7] << 6) & 0x80
-        permute |= (input_data[6] << 5) & 0x40
-        permute |= (input_data[5] << 4) & 0x20
-        permute |= (input_data[4] << 3) & 0x10
-        permute |= (input_data[3] << 2) & 0x08
-        permute |= (input_data[2] << 1) & 0x04
-        permute |= input_data[1] & 0x02
-        permute |= (input_data[0] >> 1) & 0x01
+        permute = (buffer[7] << 6) & 0x80
+        permute |= (buffer[6] << 5) & 0x40
+        permute |= (buffer[5] << 4) & 0x20
+        permute |= (buffer[4] << 3) & 0x10
+        permute |= (buffer[3] << 2) & 0x08
+        permute |= (buffer[2] << 1) & 0x04
+        permute |= buffer[1] & 0x02
+        permute |= (buffer[0] >> 1) & 0x01
         working_buffer[7] = permute
 
         # now take permute bytes back in input buffer
-        input_data[:] = working_buffer[:]
+        buffer[:] = working_buffer[:]
 
-    def _inverse_initial_permutation(self, input_data: np.ndarray):
+    def _inverse_initial_permutation(self, buffer: np.ndarray):
         """
         Inverse Initial Permutation
 
@@ -218,97 +215,97 @@ class Des(FeistelCipher):
         working_buffer = self._working_buffer
 
         # compute 1st byte,
-        permute = (input_data[4] << 7) & 0x80
-        permute |= (input_data[0] << 6) & 0x40
-        permute |= (input_data[5] << 5) & 0x20
-        permute |= (input_data[1] << 4) & 0x10
-        permute |= (input_data[6] << 3) & 0x08
-        permute |= (input_data[2] << 2) & 0x04
-        permute |= (input_data[7] << 1) & 0x02
-        permute |= input_data[3] & 0x01
+        permute = (buffer[4] << 7) & 0x80
+        permute |= (buffer[0] << 6) & 0x40
+        permute |= (buffer[5] << 5) & 0x20
+        permute |= (buffer[1] << 4) & 0x10
+        permute |= (buffer[6] << 3) & 0x08
+        permute |= (buffer[2] << 2) & 0x04
+        permute |= (buffer[7] << 1) & 0x02
+        permute |= buffer[3] & 0x01
         working_buffer[0] = permute
 
         # then 2nd byte,
-        permute = (input_data[4] << 6) & 0x80
-        permute |= (input_data[0] << 5) & 0x40
-        permute |= (input_data[5] << 4) & 0x20
-        permute |= (input_data[1] << 3) & 0x10
-        permute |= (input_data[6] << 2) & 0x08
-        permute |= (input_data[2] << 1) & 0x04
-        permute |= input_data[7] & 0x02
-        permute |= (input_data[3] >> 1) & 0x01
+        permute = (buffer[4] << 6) & 0x80
+        permute |= (buffer[0] << 5) & 0x40
+        permute |= (buffer[5] << 4) & 0x20
+        permute |= (buffer[1] << 3) & 0x10
+        permute |= (buffer[6] << 2) & 0x08
+        permute |= (buffer[2] << 1) & 0x04
+        permute |= buffer[7] & 0x02
+        permute |= (buffer[3] >> 1) & 0x01
         working_buffer[1] = permute
 
         # then 3rd byte,
-        permute = (input_data[4] << 5) & 0x80
-        permute |= (input_data[0] << 4) & 0x40
-        permute |= (input_data[5] << 3) & 0x20
-        permute |= (input_data[1] << 2) & 0x10
-        permute |= (input_data[6] << 1) & 0x08
-        permute |= input_data[2] & 0x04
-        permute |= (input_data[7] >> 1) & 0x02
-        permute |= (input_data[3] >> 2) & 0x01
+        permute = (buffer[4] << 5) & 0x80
+        permute |= (buffer[0] << 4) & 0x40
+        permute |= (buffer[5] << 3) & 0x20
+        permute |= (buffer[1] << 2) & 0x10
+        permute |= (buffer[6] << 1) & 0x08
+        permute |= buffer[2] & 0x04
+        permute |= (buffer[7] >> 1) & 0x02
+        permute |= (buffer[3] >> 2) & 0x01
         working_buffer[2] = permute
 
         # then 4th byte,
-        permute = (input_data[4] << 4) & 0x80
-        permute |= (input_data[0] << 3) & 0x40
-        permute |= (input_data[5] << 2) & 0x20
-        permute |= (input_data[1] << 1) & 0x10
-        permute |= input_data[6] & 0x08
-        permute |= (input_data[2] >> 1) & 0x04
-        permute |= (input_data[7] >> 2) & 0x02
-        permute |= (input_data[3] >> 3) & 0x01
+        permute = (buffer[4] << 4) & 0x80
+        permute |= (buffer[0] << 3) & 0x40
+        permute |= (buffer[5] << 2) & 0x20
+        permute |= (buffer[1] << 1) & 0x10
+        permute |= buffer[6] & 0x08
+        permute |= (buffer[2] >> 1) & 0x04
+        permute |= (buffer[7] >> 2) & 0x02
+        permute |= (buffer[3] >> 3) & 0x01
         working_buffer[3] = permute
 
         # then 5th byte,
-        permute = (input_data[4] << 3) & 0x80
-        permute |= (input_data[0] << 2) & 0x40
-        permute |= (input_data[5] << 1) & 0x20
-        permute |= input_data[1] & 0x10
-        permute |= (input_data[6] >> 1) & 0x08
-        permute |= (input_data[2] >> 2) & 0x04
-        permute |= (input_data[7] >> 3) & 0x02
-        permute |= (input_data[3] >> 4) & 0x01
+        permute = (buffer[4] << 3) & 0x80
+        permute |= (buffer[0] << 2) & 0x40
+        permute |= (buffer[5] << 1) & 0x20
+        permute |= buffer[1] & 0x10
+        permute |= (buffer[6] >> 1) & 0x08
+        permute |= (buffer[2] >> 2) & 0x04
+        permute |= (buffer[7] >> 3) & 0x02
+        permute |= (buffer[3] >> 4) & 0x01
         working_buffer[4] = permute
 
         # then 6th byte,
-        permute = (input_data[4] << 2) & 0x80
-        permute |= (input_data[0] << 1) & 0x40
-        permute |= input_data[5] & 0x20
-        permute |= (input_data[1] >> 1) & 0x10
-        permute |= (input_data[6] >> 2) & 0x08
-        permute |= (input_data[2] >> 3) & 0x04
-        permute |= (input_data[7] >> 4) & 0x02
-        permute |= (input_data[3] >> 5) & 0x01
+        permute = (buffer[4] << 2) & 0x80
+        permute |= (buffer[0] << 1) & 0x40
+        permute |= buffer[5] & 0x20
+        permute |= (buffer[1] >> 1) & 0x10
+        permute |= (buffer[6] >> 2) & 0x08
+        permute |= (buffer[2] >> 3) & 0x04
+        permute |= (buffer[7] >> 4) & 0x02
+        permute |= (buffer[3] >> 5) & 0x01
         working_buffer[5] = permute
 
         # then 7th byte,
-        permute = (input_data[4] << 1) & 0x80
-        permute |= input_data[0] & 0x40
-        permute |= (input_data[5] >> 1) & 0x20
-        permute |= (input_data[1] >> 2) & 0x10
-        permute |= (input_data[6] >> 3) & 0x08
-        permute |= (input_data[2] >> 4) & 0x04
-        permute |= (input_data[7] >> 5) & 0x02
-        permute |= (input_data[3] >> 6) & 0x01
+        permute = (buffer[4] << 1) & 0x80
+        permute |= buffer[0] & 0x40
+        permute |= (buffer[5] >> 1) & 0x20
+        permute |= (buffer[1] >> 2) & 0x10
+        permute |= (buffer[6] >> 3) & 0x08
+        permute |= (buffer[2] >> 4) & 0x04
+        permute |= (buffer[7] >> 5) & 0x02
+        permute |= (buffer[3] >> 6) & 0x01
         working_buffer[6] = permute
 
         # and the last, i.e., 8th byte,
-        permute = input_data[4] & 0x80
-        permute |= (input_data[0] >> 1) & 0x40
-        permute |= (input_data[5] >> 2) & 0x20
-        permute |= (input_data[1] >> 3) & 0x10
-        permute |= (input_data[6] >> 4) & 0x08
-        permute |= (input_data[2] >> 5) & 0x04
-        permute |= (input_data[7] >> 6) & 0x02
-        permute |= (input_data[3] >> 7) & 0x01
+        permute = buffer[4] & 0x80
+        permute |= (buffer[0] >> 1) & 0x40
+        permute |= (buffer[5] >> 2) & 0x20
+        permute |= (buffer[1] >> 3) & 0x10
+        permute |= (buffer[6] >> 4) & 0x08
+        permute |= (buffer[2] >> 5) & 0x04
+        permute |= (buffer[7] >> 6) & 0x02
+        permute |= (buffer[3] >> 7) & 0x01
         working_buffer[7] = permute
 
         # now take permute bytes back in input buffer
-        input_data[:] = working_buffer[:]
+        buffer[:] = working_buffer[:]
 
-    def _expansion(self, input_data: np.ndarray):
+    def _expansion(self, buffer: np.ndarray):
         """
         Expansion function
 
@@ -324,56 +321,56 @@ class Des(FeistelCipher):
         working_buffer = self._working_buffer
 
         # compute 1st byte,
-        permute = (input_data[3] << 5) & 0x20
-        permute |= (input_data[0] >> 3) & 0x1F
+        permute = (buffer[3] << 5) & 0x20
+        permute |= (buffer[0] >> 3) & 0x1F
         working_buffer[0] = permute
 
         # then 2nd byte,
-        permute = (input_data[0] << 1) & 0x3E
-        permute |= (input_data[1] >> 7) & 0x01
+        permute = (buffer[0] << 1) & 0x3E
+        permute |= (buffer[1] >> 7) & 0x01
         working_buffer[1] = permute
 
         # then 3rd byte,
-        permute = (input_data[0] << 5) & 0x20
-        permute |= (input_data[1] >> 3) & 0x1F
+        permute = (buffer[0] << 5) & 0x20
+        permute |= (buffer[1] >> 3) & 0x1F
         working_buffer[2] = permute
 
         # then 4th byte,
-        permute = (input_data[1] << 1) & 0x3E
-        permute |= (input_data[2] >> 7) & 0x01
+        permute = (buffer[1] << 1) & 0x3E
+        permute |= (buffer[2] >> 7) & 0x01
         working_buffer[3] = permute
 
         # then 5th byte,
-        permute = (input_data[1] << 5) & 0x20
-        permute |= (input_data[2] >> 3) & 0x1F
+        permute = (buffer[1] << 5) & 0x20
+        permute |= (buffer[2] >> 3) & 0x1F
         working_buffer[4] = permute
 
         # then 6th byte,
-        permute = (input_data[2] << 1) & 0x3E
-        permute |= (input_data[3] >> 7) & 0x01
+        permute = (buffer[2] << 1) & 0x3E
+        permute |= (buffer[3] >> 7) & 0x01
         working_buffer[5] = permute
 
         # then 7th byte,
-        permute = (input_data[2] << 5) & 0x20
-        permute |= (input_data[3] >> 3) & 0x1F
+        permute = (buffer[2] << 5) & 0x20
+        permute |= (buffer[3] >> 3) & 0x1F
         working_buffer[6] = permute
 
         # and the last, i.e., 8th byte,
-        permute = (input_data[3] << 1) & 0x3E
-        permute |= (input_data[0] >> 7) & 0x01
+        permute = (buffer[3] << 1) & 0x3E
+        permute |= (buffer[0] >> 7) & 0x01
         working_buffer[7] = permute
 
         # now take permute bytes back in input buffer
-        input_data[:] = working_buffer[:]
+        buffer[:] = working_buffer[:]
 
-    def _substitution(self, input_data: np.ndarray):
+    def _substitution(self, buffer: np.ndarray):
         for i in range(self.BLOCK_SIZE):
             _s = self.S_BOXES[i]
-            row = ((input_data[i] & 0x20) >> 4) | (input_data[i] & 0x01)
-            col = (input_data[i] & 0x1E) >> 1
-            input_data[i] = _s[row][col]
+            row = ((buffer[i] & 0x20) >> 4) | (buffer[i] & 0x01)
+            col = (buffer[i] & 0x1E) >> 1
+            buffer[i] = _s[row][col]
 
-    def _permutation(self, input_data: np.ndarray):
+    def _permutation(self, buffer: np.ndarray):
         """
         Permutation shuffles the bits of a 32-bit half-block
 
@@ -384,44 +381,44 @@ class Des(FeistelCipher):
         """
         working_buffer = self._working_buffer
 
-        permute = (input_data[3] & 0x01) << 7
-        permute |= (input_data[1] & 0x02) << 5
-        permute |= (input_data[4] & 0x01) << 5
-        permute |= (input_data[5] & 0x08) << 1
-        permute |= input_data[7] & 0x08
-        permute |= (input_data[2] & 0x01) << 2
-        permute |= (input_data[6] & 0x01) << 1
-        permute |= (input_data[4] & 0x08) >> 3
+        permute = (buffer[3] & 0x01) << 7
+        permute |= (buffer[1] & 0x02) << 5
+        permute |= (buffer[4] & 0x01) << 5
+        permute |= (buffer[5] & 0x08) << 1
+        permute |= buffer[7] & 0x08
+        permute |= (buffer[2] & 0x01) << 2
+        permute |= (buffer[6] & 0x01) << 1
+        permute |= (buffer[4] & 0x08) >> 3
         working_buffer[0] = permute
 
-        permute = (input_data[0] & 0x08) << 4
-        permute |= (input_data[3] & 0x02) << 5
-        permute |= (input_data[5] & 0x02) << 4
-        permute |= (input_data[6] & 0x04) << 2
-        permute |= input_data[1] & 0x08
-        permute |= input_data[4] & 0x04
-        permute |= input_data[7] & 0x02
-        permute |= (input_data[2] & 0x04) >> 2
+        permute = (buffer[0] & 0x08) << 4
+        permute |= (buffer[3] & 0x02) << 5
+        permute |= (buffer[5] & 0x02) << 4
+        permute |= (buffer[6] & 0x04) << 2
+        permute |= buffer[1] & 0x08
+        permute |= buffer[4] & 0x04
+        permute |= buffer[7] & 0x02
+        permute |= (buffer[2] & 0x04) >> 2
         working_buffer[1] = permute
 
-        permute = (input_data[0] & 0x04) << 5
-        permute |= (input_data[1] & 0x01) << 6
-        permute |= (input_data[5] & 0x01) << 5
-        permute |= (input_data[3] & 0x04) << 2
-        permute |= (input_data[7] & 0x01) << 3
-        permute |= (input_data[6] & 0x02) << 1
-        permute |= input_data[0] & 0x02
-        permute |= (input_data[2] & 0x08) >> 3
+        permute = (buffer[0] & 0x04) << 5
+        permute |= (buffer[1] & 0x01) << 6
+        permute |= (buffer[5] & 0x01) << 5
+        permute |= (buffer[3] & 0x04) << 2
+        permute |= (buffer[7] & 0x01) << 3
+        permute |= (buffer[6] & 0x02) << 1
+        permute |= buffer[0] & 0x02
+        permute |= (buffer[2] & 0x08) >> 3
         working_buffer[2] = permute
 
-        permute = (input_data[4] & 0x02) << 6
-        permute |= (input_data[3] & 0x08) << 3
-        permute |= (input_data[7] & 0x04) << 3
-        permute |= (input_data[1] & 0x04) << 2
-        permute |= (input_data[5] & 0x04) << 1
-        permute |= (input_data[2] & 0x02) << 1
-        permute |= (input_data[0] & 0x01) << 1
-        permute |= (input_data[6] & 0x08) >> 3
+        permute = (buffer[4] & 0x02) << 6
+        permute |= (buffer[3] & 0x08) << 3
+        permute |= (buffer[7] & 0x04) << 3
+        permute |= (buffer[1] & 0x04) << 2
+        permute |= (buffer[5] & 0x04) << 1
+        permute |= (buffer[2] & 0x02) << 1
+        permute |= (buffer[0] & 0x01) << 1
+        permute |= (buffer[6] & 0x08) >> 3
         working_buffer[3] = permute
 
         working_buffer[4] = 0
@@ -430,7 +427,7 @@ class Des(FeistelCipher):
         working_buffer[7] = 0
 
         # now take permute bytes back in input buffer
-        input_data[:] = working_buffer[:]
+        buffer[:] = working_buffer[:]
 
     def _permutation_choice1(self) -> Tuple[np.uint32, np.uint32]:
         """
@@ -576,16 +573,28 @@ class Des(FeistelCipher):
         key &= 0x0FFFFFFF
         return np.uint32(key)
 
-    def split_lr(self, input_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _encrypt_one_block(self, data: np.ndarray):
+        self._initial_permutation(data)
+        super(Des, self).encrypt(data, output_data=data)
+        self._inverse_initial_permutation(data)
+        return data
+
+    def _decrypt_one_block(self, data: np.ndarray):
+        self._initial_permutation(data)
+        super(Des, self).decrypt(data, output_data=data)
+        self._inverse_initial_permutation(data)
+        return data
+
+    def split_lr(self, buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         half = self.BLOCK_SIZE >> 1
 
-        left = np.zeros(input_data.shape, dtype=input_data.dtype)
-        left[:half] = input_data[:half]
+        left = np.zeros((self.BLOCK_SIZE,), dtype=buffer.dtype)
+        left[:half] = buffer[:half]
 
-        right = np.zeros(input_data.shape, dtype=input_data.dtype)
-        right[:half] = input_data[half:]
+        buffer[:half] = buffer[half:]
+        buffer[half:] = np.zeros((half,), dtype=buffer.dtype)
 
-        return left, right
+        return left, buffer
 
     def merge_lr(self, left: np.ndarray, right: np.ndarray) -> np.ndarray:
         half = self.BLOCK_SIZE >> 1
@@ -596,10 +605,10 @@ class Des(FeistelCipher):
         return left
 
     def key_schedule(self):
-        self._round_key = np.zeros((self.NO_OF_ROUNDS, self.BLOCK_SIZE), dtype=np.uint8)
+        self._round_key = np.zeros((self.no_of_rounds, self.BLOCK_SIZE), dtype=np.uint8)
 
         left, right = self._permutation_choice1()
-        for i in range(self.NO_OF_ROUNDS):
+        for i in range(self.no_of_rounds):
             right = self._left_circular_rotate(right, self.KEY_SHIFT[i])
             left = self._left_circular_rotate(left, self.KEY_SHIFT[i])
             self._permutation_choice2(left, right, i)
@@ -616,13 +625,8 @@ class Des(FeistelCipher):
     def set_key(self, key: Union[str, np.ndarray]):
         super(Des, self).set_key(key)
 
-    def encrypt(self, input_data: Union[str, np.ndarray]):
-        if isinstance(input_data, str):
-            output_data = np.array(bytearray.fromhex(input_data))
-        elif isinstance(input_data, np.ndarray):
-            output_data = np.copy(input_data)
-        else:
-            raise ValueError('Invalid input')
+    def encrypt(self, input_data: Union[str, np.ndarray], output_data: np.ndarray = None) -> Union[str, np.ndarray]:
+        output_data = Utility.copy_to_numpy(input_data, out_data=output_data, error_msg='Invalid plaintext')
 
         if len(output_data) % self.BLOCK_SIZE:
             raise ValueError(f'Input data is not multiple of block length ({self.BLOCK_SIZE} bytes)')
@@ -632,22 +636,15 @@ class Des(FeistelCipher):
         for i in range(no_of_blocks):
             _start = i * no_of_blocks
             _end = _start + self.BLOCK_SIZE
-            self._initial_permutation(output_data[_start: _end])
-            output_data[_start: _end] = super(Des, self).encrypt(output_data[_start: _end])
-            self._inverse_initial_permutation(output_data[_start: _end])
+            output_data[_start: _end] = self._encrypt_one_block(output_data[_start: _end])
 
         if isinstance(input_data, str):
-            output_data = bytes(output_data).hex().upper()
+            output_data = Utility.convert_to_str(output_data)
 
         return output_data
 
-    def decrypt(self, input_data: Union[str, np.ndarray]):
-        if isinstance(input_data, str):
-            output_data = np.array(bytearray.fromhex(input_data))
-        elif isinstance(input_data, np.ndarray):
-            output_data = np.copy(input_data)
-        else:
-            raise ValueError('Invalid input')
+    def decrypt(self, input_data: Union[str, np.ndarray], output_data: np.ndarray = None) -> Union[str, np.ndarray]:
+        output_data = Utility.copy_to_numpy(input_data, out_data=output_data, error_msg='Invalid ciphertext')
 
         if len(output_data) % self.BLOCK_SIZE:
             raise ValueError(f'Input data is not multiple of block length ({self.BLOCK_SIZE} bytes)')
@@ -657,12 +654,10 @@ class Des(FeistelCipher):
         for i in range(no_of_blocks):
             _start = i * no_of_blocks
             _end = _start + self.BLOCK_SIZE
-            self._initial_permutation(output_data[_start: _end])
-            output_data[_start: _end] = super(Des, self).decrypt(output_data[_start: _end])
-            self._inverse_initial_permutation(output_data[_start: _end])
+            output_data[_start: _end] = self._decrypt_one_block(output_data[_start: _end])
 
         if isinstance(input_data, str):
-            output_data = bytes(output_data).hex().upper()
+            output_data = Utility.convert_to_str(output_data)
 
         return output_data
 
