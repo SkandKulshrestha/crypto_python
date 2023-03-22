@@ -1,15 +1,23 @@
-from abc import ABC
-
 import numpy as np
 
-from symmetric import Symmetric
 from typing import Optional, Union, Any
 from utility import Utility
 
 
-class Rijndael(Symmetric, ABC):
+class Symmetric:
+    BLOCK_SIZE = 0
+
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None, no_of_rounds: int = 0):
-        super(Rijndael, self).__init__(key=key, no_of_rounds=no_of_rounds)
+        self.key = key
+        self.no_of_rounds = no_of_rounds
+
+        self._key = None
+        self._round_key = None
+        if key is not None:
+            self.set_key(key)
+
+    def _validate_key(self):
+        raise NotImplementedError('Provide the definition of validating key size function')
 
     def round_function(self, data: Any, key: Any) -> Any:
         raise NotImplementedError('Provide the definition of round function')
@@ -31,25 +39,7 @@ class Rijndael(Symmetric, ABC):
         self.key_schedule()
 
     def encrypt(self, input_data: Union[str, np.ndarray], output_data: np.ndarray = None) -> Union[str, np.ndarray]:
-        output_data = Utility.copy_to_numpy(input_data, out_data=output_data, error_msg='Invalid plaintext')
-
-        for i in range(self.no_of_rounds):
-            _key = self.get_round_key(i)
-            self.round_function(output_data, _key)
-
-        if isinstance(input_data, str):
-            output_data = Utility.convert_to_str(output_data)
-
-        return output_data
+        raise NotImplementedError('Provide the definition of encrypt method')
 
     def decrypt(self, input_data: Union[str, np.ndarray], output_data: np.ndarray = None) -> Union[str, np.ndarray]:
-        output_data = Utility.copy_to_numpy(input_data, out_data=output_data, error_msg='Invalid ciphertext')
-
-        for i in range(self.no_of_rounds, 0, -1):
-            _key = self.get_round_key(i - 1)
-            self.round_function(output_data, _key)
-
-        if isinstance(input_data, str):
-            output_data = Utility.convert_to_str(output_data)
-
-        return output_data
+        raise NotImplementedError('Provide the definition of decrypt method')

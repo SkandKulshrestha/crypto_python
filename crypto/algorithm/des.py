@@ -1,10 +1,10 @@
 import numpy as np
 
 from enum import IntEnum
+from feistel_cipher import FeistelCipher
 from typing import Optional, Union, Tuple
 from utility import Utility
 from bitwise import Bitwise
-from feistel_cipher import FeistelCipher
 
 
 class DesKeySize(IntEnum):

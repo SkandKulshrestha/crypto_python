@@ -1,54 +1,22 @@
+from abc import ABC
+
 import numpy as np
 
+from symmetric import Symmetric
 from typing import Optional, Union, Any, Tuple
 from utility import Utility
 from bitwise import Bitwise
 
 
-class FeistelCipher:
-    BLOCK_SIZE = 0
-
+class FeistelCipher(Symmetric, ABC):
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None, no_of_rounds: int = 0):
-        self.key = key
-        self.no_of_rounds = no_of_rounds
-
-        self._key = None
-        self._round_key = None
-        if key is not None:
-            self.set_key(key)
-
-    def _validate_key(self):
-        raise NotImplementedError('Provide the definition of validating key size function')
+        super(FeistelCipher, self).__init__(key=key, no_of_rounds=no_of_rounds)
 
     def split_lr(self, buffer: np.ndarray) -> Tuple[Any, Any]:
         raise NotImplementedError('Provide the definition of function to split the buffer into left and right')
 
     def merge_lr(self, left: Any, right: Any) -> np.ndarray:
         raise NotImplementedError('Provide the definition of function to merge left and right')
-
-    def round_function(self, right: Any, key: Any) -> Any:
-        raise NotImplementedError('Provide the definition of round function')
-
-    def key_schedule(self):
-        raise NotImplementedError('Provide the definition of key schedule')
-
-    def get_round_key(self, round_no: int) -> Any:
-        return self._round_key[round_no]
-
-    def set_key(self, key: Union[str, np.ndarray]):
-        self.key = key
-        if isinstance(key, str):
-            self._key = np.array(bytearray.fromhex(key))
-        elif isinstance(key, np.ndarray):
-            self._key = np.copy(key)
-        else:
-            raise ValueError('Invalid key data type')
-
-        # validate the given key
-        self._validate_key()
-
-        # calculate round keys
-        self.key_schedule()
 
     def encrypt(self, input_data: Union[str, np.ndarray], output_data: np.ndarray = None) -> Union[str, np.ndarray]:
         output_data = Utility.copy_to_numpy(input_data, out_data=output_data, error_msg='Invalid plaintext')

@@ -1,9 +1,8 @@
 import numpy as np
 
 from enum import IntEnum
-from typing import Optional, Union, Tuple
+from typing import Optional, Union
 from utility import Utility
-from bitwise import Bitwise
 from rijndael import Rijndael
 
 
