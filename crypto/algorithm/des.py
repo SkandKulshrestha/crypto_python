@@ -3,7 +3,6 @@ import numpy as np
 from enum import IntEnum
 from feistel_cipher import FeistelCipher
 from typing import Optional, Union, Tuple
-from utility import Utility
 from bitwise import Bitwise
 
 
@@ -14,9 +13,8 @@ class DesKeySize(IntEnum):
 
 
 class Des(FeistelCipher):
-    BLOCK_SIZE = 8
-    KEY_SHIFT = (1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1)
-    S_BOXES = (
+    _KEY_SHIFT = (1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1)
+    _S_BOXES = (
         # S1
         (
             (0x0E, 0x04, 0x0D, 0x01, 0x02, 0x0F, 0x0B, 0x08, 0x03, 0x0A, 0x06, 0x0C, 0x05, 0x09, 0x00, 0x07),
@@ -83,15 +81,57 @@ class Des(FeistelCipher):
     )
 
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(Des, self).__init__(key=key, no_of_rounds=16)
+        super(Des, self).__init__(key=key, no_of_rounds=16, block_size=8)
 
-        self._working_buffer = np.zeros((self.BLOCK_SIZE,), dtype=np.uint8)
+        self._working_buffer = np.zeros((self._block_size,), dtype=np.uint8)
 
-    def _validate_key(self):
+    def _validate_block_size(self):
+        if self._block_size != 8:
+            raise ValueError(f'{self._block_size} is not a valid block size')
+
+    def _validate_key_size(self):
         try:
             DesKeySize(len(self._key))
         except ValueError:
             raise ValueError(f'{len(self._key)} is not a valid key size')
+
+    def _key_schedule(self):
+        self._key_size = len(self._key)
+        self._round_key = np.zeros((self._no_of_rounds, self._block_size), dtype=np.uint8)
+
+        left, right = self._permutation_choice1()
+        for i in range(self._no_of_rounds):
+            right = self._left_circular_rotate(right, self._KEY_SHIFT[i])
+            left = self._left_circular_rotate(left, self._KEY_SHIFT[i])
+            self._permutation_choice2(left, right, i)
+
+    def _split_lr(self, buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        half = self._block_size >> 1
+
+        left = np.zeros((self._block_size,), dtype=buffer.dtype)
+        left[:half] = buffer[:half]
+
+        buffer[:half] = buffer[half:]
+        buffer[half:] = np.zeros((half,), dtype=buffer.dtype)
+
+        return left, buffer
+
+    def _merge_lr(self, left: np.ndarray, right: np.ndarray) -> np.ndarray:
+        half = self._block_size >> 1
+
+        # copy data of right into left
+        left[half:] = right[:half]
+
+        return left
+
+    def _round_function(self, buffer: np.ndarray, key: np.ndarray):
+        # expansion
+        self._expansion(buffer)
+        Bitwise.xor(buffer, key, out=buffer)
+        self._substitution(buffer)
+        self._permutation(buffer)
+
+        return buffer
 
     def _initial_permutation(self, buffer: np.ndarray):
         """
@@ -364,8 +404,8 @@ class Des(FeistelCipher):
         buffer[:] = working_buffer[:]
 
     def _substitution(self, buffer: np.ndarray):
-        for i in range(self.BLOCK_SIZE):
-            _s = self.S_BOXES[i]
+        for i in range(self._block_size):
+            _s = self._S_BOXES[i]
             row = ((buffer[i] & 0x20) >> 4) | (buffer[i] & 0x01)
             col = (buffer[i] & 0x1E) >> 1
             buffer[i] = _s[row][col]
@@ -573,93 +613,17 @@ class Des(FeistelCipher):
         key &= 0x0FFFFFFF
         return np.uint32(key)
 
-    def _encrypt_one_block(self, data: np.ndarray):
-        self._initial_permutation(data)
-        super(Des, self).encrypt(data, output_data=data)
-        self._inverse_initial_permutation(data)
-        return data
+    def encrypt_one_block(self, buffer: np.ndarray):
+        self._initial_permutation(buffer)
+        super(Des, self).encrypt_one_block(buffer)
+        self._inverse_initial_permutation(buffer)
+        return buffer
 
-    def _decrypt_one_block(self, data: np.ndarray):
-        self._initial_permutation(data)
-        super(Des, self).decrypt(data, output_data=data)
-        self._inverse_initial_permutation(data)
-        return data
-
-    def split_lr(self, buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        half = self.BLOCK_SIZE >> 1
-
-        left = np.zeros((self.BLOCK_SIZE,), dtype=buffer.dtype)
-        left[:half] = buffer[:half]
-
-        buffer[:half] = buffer[half:]
-        buffer[half:] = np.zeros((half,), dtype=buffer.dtype)
-
-        return left, buffer
-
-    def merge_lr(self, left: np.ndarray, right: np.ndarray) -> np.ndarray:
-        half = self.BLOCK_SIZE >> 1
-
-        # copy data of right into left
-        left[half:] = right[:half]
-
-        return left
-
-    def key_schedule(self):
-        self._round_key = np.zeros((self.no_of_rounds, self.BLOCK_SIZE), dtype=np.uint8)
-
-        left, right = self._permutation_choice1()
-        for i in range(self.no_of_rounds):
-            right = self._left_circular_rotate(right, self.KEY_SHIFT[i])
-            left = self._left_circular_rotate(left, self.KEY_SHIFT[i])
-            self._permutation_choice2(left, right, i)
-
-    def round_function(self, right: np.ndarray, key: np.ndarray):
-        # expansion
-        self._expansion(right)
-        Bitwise.xor(right, key, out=right)
-        self._substitution(right)
-        self._permutation(right)
-
-        return right
-
-    def set_key(self, key: Union[str, np.ndarray]):
-        super(Des, self).set_key(key)
-
-    def encrypt(self, input_data: Union[str, np.ndarray], output_data: np.ndarray = None) -> Union[str, np.ndarray]:
-        output_data = Utility.copy_to_numpy(input_data, out_data=output_data, error_msg='Invalid plaintext')
-
-        if len(output_data) % self.BLOCK_SIZE:
-            raise ValueError(f'Input data is not multiple of block length ({self.BLOCK_SIZE} bytes)')
-
-        no_of_blocks = len(output_data) // self.BLOCK_SIZE
-
-        for i in range(no_of_blocks):
-            _start = i * no_of_blocks
-            _end = _start + self.BLOCK_SIZE
-            output_data[_start: _end] = self._encrypt_one_block(output_data[_start: _end])
-
-        if isinstance(input_data, str):
-            output_data = Utility.convert_to_str(output_data)
-
-        return output_data
-
-    def decrypt(self, input_data: Union[str, np.ndarray], output_data: np.ndarray = None) -> Union[str, np.ndarray]:
-        output_data = Utility.copy_to_numpy(input_data, out_data=output_data, error_msg='Invalid ciphertext')
-
-        if len(output_data) % self.BLOCK_SIZE:
-            raise ValueError(f'Input data is not multiple of block length ({self.BLOCK_SIZE} bytes)')
-
-        no_of_blocks = len(output_data) // self.BLOCK_SIZE
-
-        for i in range(no_of_blocks):
-            _start = i * no_of_blocks
-            _end = _start + self.BLOCK_SIZE
-            output_data[_start: _end] = self._decrypt_one_block(output_data[_start: _end])
-
-        if isinstance(input_data, str):
-            output_data = Utility.convert_to_str(output_data)
-
-        return output_data
+    def decrypt_one_block(self, buffer: np.ndarray):
+        self._initial_permutation(buffer)
+        super(Des, self).decrypt_one_block(buffer)
+        self._inverse_initial_permutation(buffer)
+        return buffer
 
 
 if __name__ == '__main__':

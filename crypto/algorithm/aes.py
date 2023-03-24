@@ -86,21 +86,21 @@ class Aes(Rijndael):
 
         self._working_buffer = np.zeros((self.BLOCK_SIZE,), dtype=np.uint8)
 
-    def _validate_key(self):
+    def _validate_key_size(self):
         try:
             AesKeySize(len(self._key))
         except ValueError:
             raise ValueError(f'{len(self._key)} is not a valid key size')
 
-    def key_schedule(self):
+    def _key_schedule(self):
         self._round_key = np.zeros((self.no_of_rounds, self.BLOCK_SIZE), dtype=np.uint8)
 
         for i in range(self.no_of_rounds):
             pass
 
-    def round_function(self, input_data: np.ndarray, key: np.ndarray):
+    def _round_function(self, buffer: np.ndarray, key: np.ndarray):
 
-        return input_data
+        return buffer
 
     def set_key(self, key: Union[str, np.ndarray]):
         super(Aes, self).set_key(key)
