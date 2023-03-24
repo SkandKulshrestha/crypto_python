@@ -8,8 +8,9 @@ from bitwise import Bitwise
 
 class FeistelCipher(Symmetric, ABC):
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None,
+                 iv: Optional[Union[str, np.ndarray]] = None,
                  no_of_rounds: int = 0, block_size: int = 0):
-        super(FeistelCipher, self).__init__(key=key, no_of_rounds=no_of_rounds, block_size=block_size)
+        super(FeistelCipher, self).__init__(key=key, iv=iv, no_of_rounds=no_of_rounds, block_size=block_size)
 
     def _split_lr(self, buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError('Provide the definition of method to split the buffer into left and right')

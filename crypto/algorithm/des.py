@@ -80,8 +80,9 @@ class Des(FeistelCipher):
         )
     )
 
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(Des, self).__init__(key=key, no_of_rounds=16, block_size=8)
+    def __init__(self, key: Optional[Union[str, np.ndarray]] = None,
+                 iv: Optional[Union[str, np.ndarray]] = None):
+        super(Des, self).__init__(key=key, iv=iv, no_of_rounds=16, block_size=8)
 
         self._working_buffer = np.zeros((self._block_size,), dtype=np.uint8)
 
