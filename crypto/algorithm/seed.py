@@ -179,9 +179,7 @@ class Seed(FeistelCipher):
         key0, key1, key2, key3 = self._convert_to_state(self._key)
 
         with warnings.catch_warnings():
-            # warnings.filterwarnings(RuntimeWarning)
-            # warnings.simplefilter("ignore")
-
+            warnings.simplefilter("ignore")
             for i in range(self._no_of_rounds):
                 self._round_key[i, 0] = self._g(key0 + key2 - np.uint32(self._KC[i]))
                 self._round_key[i, 1] = self._g(key1 - key3 + np.uint32(self._KC[i]))
@@ -189,10 +187,14 @@ class Seed(FeistelCipher):
                 # since index starts from 0, so k1 (which will be calculated as odd) is now calculated as even
                 if i % 2:
                     # odd round
-                    key0, key1 = key1, key0
+                    msb, lsb = key2, key3
+                    key2 = np.uint32((msb << 8) | (lsb >> 24))
+                    key3 = np.uint32((lsb << 8) | (msb >> 24))
                 else:
                     # even round
-                    key2, key3 = key3, key2
+                    msb, lsb = key0, key1
+                    key0 = np.uint32((msb >> 8) | (lsb << 24))
+                    key1 = np.uint32((lsb >> 8) | (msb << 24))
 
     def _split_lr(self, buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         half = len(buffer) >> 1
@@ -217,10 +219,12 @@ class Seed(FeistelCipher):
         r1 = buffer[1] ^ key[1]
 
         # handle RuntimeWarning: overflow encountered in ubyte_scalars
-        _g_r0_xor_r1 = self._g(r0 ^ r1)
-        _gg_r0_xor_r1_and_r0 = self._g(_g_r0_xor_r1 + r0)
-        r1_prime = self._g(_gg_r0_xor_r1_and_r0 + _g_r0_xor_r1)
-        r0_prime = r1_prime + _gg_r0_xor_r1_and_r0
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            _g_r0_xor_r1 = self._g(r0 ^ r1)
+            _gg_r0_xor_r1_and_r0 = self._g(_g_r0_xor_r1 + r0)
+            r1_prime = self._g(_gg_r0_xor_r1_and_r0 + _g_r0_xor_r1)
+            r0_prime = r1_prime + _gg_r0_xor_r1_and_r0
 
         buffer[0] = r0_prime
         buffer[1] = r1_prime
@@ -288,18 +292,65 @@ class Seed(FeistelCipher):
 
 
 if __name__ == '__main__':
+    print('Scenario 1')
     _key = '00000000000000000000000000000000'
     _input_data = '000102030405060708090A0B0C0D0E0F'
-    print('Scenario 1')
-    print(f'Key {_key}')
-    print(f'Plaintext {_input_data}')
     seed = Seed()
     seed.set_key(_key)
     _output_data = seed.encrypt(_input_data)
+    print(f'Key {_key}')
+    print(f'Plaintext {_input_data}')
     print(f'Ciphertext {_output_data}')
     if _output_data != '5EBAC6E0054E166819AFF1CC6D346CDB':
         raise RuntimeError('SEED encryption fails')
+    _output_data = seed.decrypt(_output_data)
+    print(f'Plaintext {_output_data}')
+    if _output_data != _input_data:
+        raise RuntimeError('SEED decryption fails')
 
+    print('Scenario 2')
+    _key = '000102030405060708090A0B0C0D0E0F'
+    _input_data = '00000000000000000000000000000000'
+    seed = Seed()
+    seed.set_key(_key)
+    _output_data = seed.encrypt(_input_data)
+    print(f'Key {_key}')
+    print(f'Plaintext {_input_data}')
+    print(f'Ciphertext {_output_data}')
+    if _output_data != 'C11F22F20140505084483597E4370F43':
+        raise RuntimeError('SEED encryption fails')
+    _output_data = seed.decrypt(_output_data)
+    print(f'Plaintext {_output_data}')
+    if _output_data != _input_data:
+        raise RuntimeError('SEED decryption fails')
+
+    print('Scenario 3')
+    _key = '4706480851E61BE85D74BFB3FD956185'
+    _input_data = '83A2F8A288641FB9A4E9A5CC2F131C7D'
+    seed = Seed()
+    seed.set_key(_key)
+    _output_data = seed.encrypt(_input_data)
+    print(f'Key {_key}')
+    print(f'Plaintext {_input_data}')
+    print(f'Ciphertext {_output_data}')
+    if _output_data != 'EE54D13EBCAE706D226BC3142CD40D4A':
+        raise RuntimeError('SEED encryption fails')
+    _output_data = seed.decrypt(_output_data)
+    print(f'Plaintext {_output_data}')
+    if _output_data != _input_data:
+        raise RuntimeError('SEED decryption fails')
+
+    print('Scenario 4')
+    _key = '28DBC3BC49FFD87DCFA509B11D422BE7'
+    _input_data = 'B41E6BE2EBA84A148E2EED84593C5EC7'
+    seed = Seed()
+    seed.set_key(_key)
+    _output_data = seed.encrypt(_input_data)
+    print(f'Key {_key}')
+    print(f'Plaintext {_input_data}')
+    print(f'Ciphertext {_output_data}')
+    if _output_data != '9B9B7BFCD1813CB95D0B3618F40F5122':
+        raise RuntimeError('SEED encryption fails')
     _output_data = seed.decrypt(_output_data)
     print(f'Plaintext {_output_data}')
     if _output_data != _input_data:
