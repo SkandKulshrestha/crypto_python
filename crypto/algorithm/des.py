@@ -1,9 +1,11 @@
 import numpy as np
+import warnings
 
 from enum import IntEnum
 from feistel_cipher import FeistelCipher
 from typing import Optional, Union, Tuple
 from bitwise import Bitwise
+from warning_crypto import WithdrawnWarning, KeyParityWarning
 
 
 class DesKeySize(IntEnum):
@@ -92,7 +94,16 @@ class Des(FeistelCipher):
 
     def _validate_key_size(self):
         try:
-            DesKeySize(len(self._key))
+            key_size = DesKeySize(len(self._key))
+
+            if key_size == DesKeySize.DES_64_BIT_KEY:
+                warnings.warn('DES was withdrawn on May 19, 2005', WithdrawnWarning)
+
+            # check for odd parity
+            for k in self._key:
+                if bin(k).count('1') % 2 == 0:
+                    warnings.warn(f'DES key parity bit for {k:02X} is not valid', KeyParityWarning)
+                    break
         except ValueError:
             raise ValueError(f'{len(self._key)} is not a valid key size')
 
@@ -128,7 +139,7 @@ class Des(FeistelCipher):
     def _round_function(self, buffer: np.ndarray, key: np.ndarray):
         # expansion
         self._expansion(buffer)
-        Bitwise.xor(buffer, key, out=buffer)
+        self._xor(buffer, key)
         self._substitution(buffer)
         self._permutation(buffer)
 
@@ -404,6 +415,10 @@ class Des(FeistelCipher):
         # now take permute bytes back in input buffer
         buffer[:] = working_buffer[:]
 
+    @staticmethod
+    def _xor(buffer: np.ndarray, key: np.ndarray):
+        Bitwise.xor(buffer, key, out=buffer)
+
     def _substitution(self, buffer: np.ndarray):
         for i in range(self._block_size):
             _s = self._S_BOXES[i]
@@ -640,12 +655,12 @@ if __name__ == '__main__':
     _output_data = des.encrypt(_input_data)
     print(f'Ciphertext {_output_data}')
     if _output_data != '85E813540F0AB405':
-        raise RuntimeError('Des encryption fails')
+        raise RuntimeError('DES encryption fails')
 
     _output_data = des.decrypt(_output_data)
     print(f'Plaintext {_output_data}')
     if _output_data != _input_data:
-        raise RuntimeError('Des decryption fails')
+        raise RuntimeError('DES decryption fails')
 
     # Plain Text: 123456ABCD132536
     # Key : AABB09182736CCDD
@@ -707,9 +722,9 @@ if __name__ == '__main__':
     _output_data = des.encrypt(_input_data)
     print(f'Ciphertext {_output_data}')
     if _output_data != 'C0B7A8D05F3A829C':
-        raise RuntimeError('Des encryption fails')
+        raise RuntimeError('DES encryption fails')
 
     _output_data = des.decrypt(_output_data)
     print(f'Plaintext {_output_data}')
     if _output_data != _input_data:
-        raise RuntimeError('Des decryption fails')
+        raise RuntimeError('DES decryption fails')
