@@ -4,8 +4,6 @@ import warnings
 from enum import IntEnum
 from feistel_cipher import FeistelCipher
 from typing import Optional, Union, Tuple
-from bitwise import Bitwise
-from warning_crypto import WithdrawnWarning, KeyParityWarning
 
 
 class SeedKeySize(IntEnum):
@@ -161,15 +159,13 @@ class Seed(FeistelCipher):
                  iv: Optional[Union[str, np.ndarray]] = None):
         super(Seed, self).__init__(key=key, iv=iv, no_of_rounds=16, block_size=16)
 
-        self._working_buffer = np.zeros((self._block_size,), dtype=np.uint8)
-
     def _validate_block_size(self):
         if self._block_size != 16:
             raise ValueError(f'{self._block_size} is not a valid block size')
 
     def _validate_key_size(self):
         try:
-            key_size = SeedKeySize(len(self._key))
+            SeedKeySize(len(self._key))
         except ValueError:
             raise ValueError(f'{len(self._key)} is not a valid key size')
 
@@ -256,25 +252,9 @@ class Seed(FeistelCipher):
 
     @staticmethod
     def _convert_from_state(buffer: np.ndarray, state: np.ndarray):
-        buffer[0] = (state[0] >> 24) & 0xFF
-        buffer[1] = (state[0] >> 16) & 0xFF
-        buffer[2] = (state[0] >> 8) & 0xFF
-        buffer[3] = state[0]
-
-        buffer[4] = (state[1] >> 24) & 0xFF
-        buffer[5] = (state[1] >> 16) & 0xFF
-        buffer[6] = (state[1] >> 8) & 0xFF
-        buffer[7] = state[1]
-
-        buffer[8] = (state[2] >> 24) & 0xFF
-        buffer[9] = (state[2] >> 16) & 0xFF
-        buffer[10] = (state[2] >> 8) & 0xFF
-        buffer[11] = state[2]
-
-        buffer[12] = (state[3] >> 24) & 0xFF
-        buffer[13] = (state[3] >> 16) & 0xFF
-        buffer[14] = (state[3] >> 8) & 0xFF
-        buffer[15] = state[3]
+        for i in range(4):
+            for j in range(4):
+                buffer[i * 4 + j] = (state[i] >> (24 - j * 8)) & 0xFF
 
     def encrypt_one_block(self, buffer: np.ndarray):
         _buffer = np.zeros((4,), dtype=np.uint32)
