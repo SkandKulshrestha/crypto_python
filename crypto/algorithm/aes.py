@@ -6,13 +6,13 @@ from utility import Utility
 from rijndael import Rijndael
 
 
-class AesKeySize(IntEnum):
+class AESKeySize(IntEnum):
     AES_128_BIT_KEY = 16,
     AES_192_BIT_KEY = 24,
     AES_256_BIT_KEY = 32
 
 
-class Aes(Rijndael):
+class AES(Rijndael):
     BLOCK_SIZE = 16
     KEY_SHIFT = (1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1)
     S_BOXES = (
@@ -81,71 +81,33 @@ class Aes(Rijndael):
         )
     )
 
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(Aes, self).__init__(key=key, no_of_rounds=16)
+    def __init__(self, key: Optional[Union[str, np.ndarray]] = None,
+                 iv: Optional[Union[str, np.ndarray]] = None):
+        super(AES, self).__init__(key=key, iv=iv)
 
         self._working_buffer = np.zeros((self.BLOCK_SIZE,), dtype=np.uint8)
 
+    def _validate_block_size(self):
+        if self._block_size != 16:
+            raise ValueError(f'{self._block_size} is not a valid block size')
+
     def _validate_key_size(self):
         try:
-            AesKeySize(len(self._key))
+            AESKeySize(len(self._key))
         except ValueError:
             raise ValueError(f'{len(self._key)} is not a valid key size')
 
     def _key_schedule(self):
-        self._round_key = np.zeros((self.no_of_rounds, self.BLOCK_SIZE), dtype=np.uint8)
+        self._round_key = np.zeros((self._no_of_rounds, self.BLOCK_SIZE), dtype=np.uint8)
 
-        for i in range(self.no_of_rounds):
+        for i in range(self._no_of_rounds):
             pass
 
-    def _round_function(self, buffer: np.ndarray, key: np.ndarray):
+    def encrypt_one_block(self, buffer: np.ndarray) -> np.ndarray:
+        raise NotImplementedError('Provide the definition of encrypt method for one block')
 
-        return buffer
-
-    def set_key(self, key: Union[str, np.ndarray]):
-        super(Aes, self).set_key(key)
-
-    def _encrypt_one_block(self, data: np.ndarray):
-        return data
-
-    def _decrypt_one_block(self, data: np.ndarray):
-        return data
-
-    def encrypt(self, input_data: Union[str, np.ndarray], output_data: np.ndarray = None) -> Union[str, np.ndarray]:
-        output_data = Utility.copy_to_numpy(input_data, out_data=output_data, error_msg='Invalid plaintext')
-
-        if len(output_data) % self.BLOCK_SIZE:
-            raise ValueError(f'Input data is not multiple of block length ({self.BLOCK_SIZE} bytes)')
-
-        no_of_blocks = len(output_data) // self.BLOCK_SIZE
-
-        for i in range(no_of_blocks):
-            _start = i * no_of_blocks
-            _end = _start + self.BLOCK_SIZE
-            output_data[_start: _end] = self._encrypt_one_block(output_data[_start: _end])
-
-        if isinstance(input_data, str):
-            output_data = Utility.convert_to_str(output_data)
-
-        return output_data
-
-    def decrypt(self, input_data: Union[str, np.ndarray], output_data: np.ndarray = None) -> Union[str, np.ndarray]:
-        output_data = Utility.copy_to_numpy(input_data, out_data=output_data, error_msg='Invalid ciphertext')
-
-        if len(output_data) % self.BLOCK_SIZE:
-            raise ValueError(f'Input data is not multiple of block length ({self.BLOCK_SIZE} bytes)')
-
-        no_of_blocks = len(output_data) // self.BLOCK_SIZE
-
-        for i in range(no_of_blocks):
-            _start = i * no_of_blocks
-            _end = _start + self.BLOCK_SIZE
-            output_data[_start: _end] = self._decrypt_one_block(output_data[_start: _end])
-
-        if isinstance(input_data, str):
-            output_data = Utility.convert_to_str(output_data)
-
-        return output_data
+    def decrypt_one_block(self, buffer: np.ndarray) -> np.ndarray:
+        raise NotImplementedError('Provide the definition of encrypt method for one block')
 
 
 if __name__ == '__main__':
@@ -156,14 +118,14 @@ if __name__ == '__main__':
     print('Scenario 1')
     print(f'Key {_key}')
     print(f'Plaintext {_input_data}')
-    aes = Aes()
+    aes = AES()
     aes.set_key(_key)
     _output_data = aes.encrypt(_input_data)
     print(f'Ciphertext {_output_data}')
     if _output_data != '29C3505F571420F6402299B31A02D73A':
-        raise RuntimeError('Aes encryption fails')
+        raise RuntimeError('AES encryption fails')
 
     _output_data = aes.decrypt(_output_data)
     print(f'Plaintext {_output_data}')
     if _output_data != _input_data:
-        raise RuntimeError('Aes decryption fails')
+        raise RuntimeError('AES decryption fails')

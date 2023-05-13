@@ -45,12 +45,12 @@ class Symmetric:
         if key is not None:
             self.set_key(key)
 
+        # validate block size
+        self._validate_block_size()
+
         # set iv if passed
         if iv is not None:
             self.set_iv(iv)
-
-        # validate block size
-        self._validate_block_size()
 
     def _validate_block_size(self):
         raise NotImplementedError('Provide the definition of method validating block size')
@@ -69,6 +69,7 @@ class Symmetric:
     def set_key(self, key: Union[str, np.ndarray]):
         self.key = key
         self._key = Utility.copy_to_numpy(key, error_msg='Invalid key')
+        self._round_key = None
 
         # validate the given key
         self._validate_key_size()
@@ -79,6 +80,10 @@ class Symmetric:
     def set_iv(self, iv: Union[str, np.ndarray]):
         self.iv = iv
         self._iv = Utility.copy_to_numpy(iv, error_msg='Invalid Initialization Vector')
+
+        # validate the iv length
+        if self._block_size != len(self._iv):
+            raise ValueError(f'{self._iv} is not a valid block size')
 
     def encrypt_one_block(self, buffer: np.ndarray) -> np.ndarray:
         raise NotImplementedError('Provide the definition of encrypt method for one block')

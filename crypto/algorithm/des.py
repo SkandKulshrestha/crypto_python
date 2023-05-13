@@ -8,13 +8,11 @@ from bitwise import Bitwise
 from warning_crypto import WithdrawnWarning, KeyParityWarning
 
 
-class DesKeySize(IntEnum):
-    DES_64_BIT_KEY = 8,
-    DES_128_BIT_KEY = 16,
-    DES_192_BIT_KEY = 24
+class DESKeySize(IntEnum):
+    DES_64_BIT_KEY = 8
 
 
-class Des(FeistelCipher):
+class DES(FeistelCipher):
     _KEY_SHIFT = (1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1)
     _S_BOXES = (
         # S1
@@ -84,7 +82,7 @@ class Des(FeistelCipher):
 
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None,
                  iv: Optional[Union[str, np.ndarray]] = None):
-        super(Des, self).__init__(key=key, iv=iv, no_of_rounds=16, block_size=8)
+        super(DES, self).__init__(key=key, iv=iv, no_of_rounds=16, block_size=8)
 
         self._working_buffer = np.zeros((self._block_size,), dtype=np.uint8)
 
@@ -94,10 +92,9 @@ class Des(FeistelCipher):
 
     def _validate_key_size(self):
         try:
-            key_size = DesKeySize(len(self._key))
+            DESKeySize(len(self._key))
 
-            if key_size == DesKeySize.DES_64_BIT_KEY:
-                warnings.warn('DES was withdrawn on May 19, 2005', WithdrawnWarning)
+            warnings.warn('DES was withdrawn on May 19, 2005', WithdrawnWarning)
 
             # check for odd parity
             for k in self._key:
@@ -111,11 +108,11 @@ class Des(FeistelCipher):
         self._key_size = len(self._key)
         self._round_key = np.zeros((self._no_of_rounds, self._block_size), dtype=np.uint8)
 
-        left, right = self._permutation_choice1()
+        left, right = self._permutation_choice1(self._key)
         for i in range(self._no_of_rounds):
             right = self._left_circular_rotate(right, self._KEY_SHIFT[i])
             left = self._left_circular_rotate(left, self._KEY_SHIFT[i])
-            self._permutation_choice2(left, right, i)
+            self._permutation_choice2(left, right, self._round_key[i])
 
     def _split_lr(self, buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         half = self._block_size >> 1
@@ -485,7 +482,8 @@ class Des(FeistelCipher):
         # now take permute bytes back in input buffer
         buffer[:] = working_buffer[:]
 
-    def _permutation_choice1(self) -> Tuple[np.uint32, np.uint32]:
+    @staticmethod
+    def _permutation_choice1(key: np.ndarray) -> Tuple[np.uint32, np.uint32]:
         """
         Left
         57    49    41    33    25    17     9
@@ -498,7 +496,6 @@ class Des(FeistelCipher):
         14     6    61    53    45    37    29
         21    13     5    28    20    12     4
         """
-        key = self._key
         left, right = 0, 0
 
         # left
@@ -542,7 +539,8 @@ class Des(FeistelCipher):
 
         return np.uint32(left), np.uint32(right)
 
-    def _permutation_choice2(self, left: np.uint32, right: np.uint32, round_no: int):
+    @staticmethod
+    def _permutation_choice2(left: np.uint32, right: np.uint32, round_key: np.ndarray):
         """
         14    17    11    24     1     5
          3    28    15     6    21    10
@@ -553,16 +551,13 @@ class Des(FeistelCipher):
         44    49    39    56    34    53
         46    42    50    36    29    32
         """
-        # for fast access
-        _round_key = self._round_key[round_no]
-
         result = (left & 0x00004000) >> 9
         result |= (left & 0x00000800) >> 7
         result |= (left & 0x00020000) >> 14
         result |= (left & 0x00000010) >> 2
         result |= (left & 0x08000000) >> 26
         result |= (left & 0x00800000) >> 23
-        _round_key[0] = np.uint8(result)
+        round_key[0] = np.uint8(result)
 
         result = (left & 0x02000000) >> 20
         result |= (left & 0x00000001) << 4
@@ -570,7 +565,7 @@ class Des(FeistelCipher):
         result |= (left & 0x00400000) >> 20
         result |= (left & 0x00000080) >> 6
         result |= (left & 0x00040000) >> 18
-        _round_key[1] = np.uint8(result)
+        round_key[1] = np.uint8(result)
 
         result = left & 0x00000020
         result |= (left & 0x00000200) >> 5
@@ -578,7 +573,7 @@ class Des(FeistelCipher):
         result |= (left & 0x01000000) >> 22
         result |= (left & 0x00000004) >> 1
         result |= (left & 0x00100000) >> 20
-        _round_key[2] = np.uint8(result)
+        round_key[2] = np.uint8(result)
 
         result = (left & 0x00001000) >> 7
         result |= (left & 0x00200000) >> 17
@@ -586,7 +581,7 @@ class Des(FeistelCipher):
         result |= (left & 0x00000100) >> 6
         result |= (left & 0x00008000) >> 14
         result |= (left & 0x04000000) >> 26
-        _round_key[3] = np.uint8(result)
+        round_key[3] = np.uint8(result)
 
         result = (right & 0x00008000) >> 10
         result |= right & 0x00000010
@@ -594,7 +589,7 @@ class Des(FeistelCipher):
         result |= (right & 0x00080000) >> 17
         result |= (right & 0x00000200) >> 8
         result |= (right & 0x00000002) >> 1
-        _round_key[4] = np.uint8(result)
+        round_key[4] = np.uint8(result)
 
         result = (right & 0x04000000) >> 21
         result |= (right & 0x00010000) >> 12
@@ -602,7 +597,7 @@ class Des(FeistelCipher):
         result |= (right & 0x00000800) >> 9
         result |= (right & 0x00800000) >> 22
         result |= (right & 0x00000100) >> 8
-        _round_key[5] = np.uint8(result)
+        round_key[5] = np.uint8(result)
 
         result = (right & 0x00001000) >> 7
         result |= (right & 0x00000080) >> 3
@@ -610,7 +605,7 @@ class Des(FeistelCipher):
         result |= (right & 0x00000001) << 2
         result |= (right & 0x00400000) >> 21
         result |= (right & 0x00000008) >> 3
-        _round_key[6] = np.uint8(result)
+        round_key[6] = np.uint8(result)
 
         result = (right & 0x00000400) >> 5
         result |= (right & 0x00004000) >> 10
@@ -618,7 +613,7 @@ class Des(FeistelCipher):
         result |= (right & 0x00100000) >> 18
         result |= (right & 0x08000000) >> 26
         result |= (right & 0x01000000) >> 24
-        _round_key[7] = np.uint8(result)
+        round_key[7] = np.uint8(result)
 
     @staticmethod
     def _left_circular_rotate(key: np.uint32, rotate_by: int) -> np.uint32:
@@ -631,13 +626,13 @@ class Des(FeistelCipher):
 
     def encrypt_one_block(self, buffer: np.ndarray):
         self._initial_permutation(buffer)
-        super(Des, self).encrypt_one_block(buffer)
+        super(DES, self).encrypt_one_block(buffer)
         self._inverse_initial_permutation(buffer)
         return buffer
 
     def decrypt_one_block(self, buffer: np.ndarray):
         self._initial_permutation(buffer)
-        super(Des, self).decrypt_one_block(buffer)
+        super(DES, self).decrypt_one_block(buffer)
         self._inverse_initial_permutation(buffer)
         return buffer
 
@@ -650,7 +645,7 @@ if __name__ == '__main__':
     print('Scenario 1')
     print(f'Key {_key}')
     print(f'Plaintext {_input_data}')
-    des = Des()
+    des = DES()
     des.set_key(_key)
     _output_data = des.encrypt(_input_data)
     print(f'Ciphertext {_output_data}')
@@ -717,7 +712,7 @@ if __name__ == '__main__':
     print('\nScenario 2')
     print(f'Key {_key}')
     print(f'Plaintext {_input_data}')
-    des = Des()
+    des = DES()
     des.set_key(_key)
     _output_data = des.encrypt(_input_data)
     print(f'Ciphertext {_output_data}')

@@ -93,8 +93,9 @@ class Rijndael(Symmetric):
     )
 
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None,
-                 no_of_rounds: int = 0, block_size: int = 0):
-        super(Rijndael, self).__init__(key=key, no_of_rounds=no_of_rounds, block_size=block_size)
+                 iv: Optional[Union[str, np.ndarray]] = None,
+                 block_size: int = 0):
+        super(Rijndael, self).__init__(key=key, iv=iv, block_size=block_size)
 
         self._nb = self._block_size >> 2
         self._state_shape = (4, self._nb)

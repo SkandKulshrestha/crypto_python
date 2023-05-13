@@ -6,11 +6,11 @@ from feistel_cipher import FeistelCipher
 from typing import Optional, Union, Tuple
 
 
-class SeedKeySize(IntEnum):
+class SEEDKeySize(IntEnum):
     SEED_128_BIT_KEY = 16
 
 
-class Seed(FeistelCipher):
+class SEED(FeistelCipher):
     _SS0 = (
         0x2989A1A8, 0x05858184, 0x16C6D2D4, 0x13C3D3D0, 0x14445054, 0x1D0D111C, 0x2C8CA0AC, 0x25052124,
         0x1D4D515C, 0x03434340, 0x18081018, 0x1E0E121C, 0x11415150, 0x3CCCF0FC, 0x0ACAC2C8, 0x23436360,
@@ -157,7 +157,7 @@ class Seed(FeistelCipher):
 
     def __init__(self, key: Optional[Union[str, np.ndarray]] = None,
                  iv: Optional[Union[str, np.ndarray]] = None):
-        super(Seed, self).__init__(key=key, iv=iv, no_of_rounds=16, block_size=16)
+        super(SEED, self).__init__(key=key, iv=iv, no_of_rounds=16, block_size=16)
 
     def _validate_block_size(self):
         if self._block_size != 16:
@@ -165,7 +165,7 @@ class Seed(FeistelCipher):
 
     def _validate_key_size(self):
         try:
-            SeedKeySize(len(self._key))
+            SEEDKeySize(len(self._key))
         except ValueError:
             raise ValueError(f'{len(self._key)} is not a valid key size')
 
@@ -259,14 +259,14 @@ class Seed(FeistelCipher):
     def encrypt_one_block(self, buffer: np.ndarray):
         _buffer = np.zeros((4,), dtype=np.uint32)
         self._convert_to_state(buffer, _buffer)
-        super(Seed, self).encrypt_one_block(_buffer)
+        super(SEED, self).encrypt_one_block(_buffer)
         self._convert_from_state(buffer, _buffer)
         return buffer
 
     def decrypt_one_block(self, buffer: np.ndarray):
         _buffer = np.zeros((4,), dtype=np.uint32)
         self._convert_to_state(buffer, _buffer)
-        super(Seed, self).decrypt_one_block(_buffer)
+        super(SEED, self).decrypt_one_block(_buffer)
         self._convert_from_state(buffer, _buffer)
         return buffer
 
@@ -275,7 +275,7 @@ if __name__ == '__main__':
     print('Scenario 1')
     _key = '00000000000000000000000000000000'
     _input_data = '000102030405060708090A0B0C0D0E0F'
-    seed = Seed()
+    seed = SEED()
     seed.set_key(_key)
     _output_data = seed.encrypt(_input_data)
     print(f'Key {_key}')
@@ -291,7 +291,7 @@ if __name__ == '__main__':
     print('Scenario 2')
     _key = '000102030405060708090A0B0C0D0E0F'
     _input_data = '00000000000000000000000000000000'
-    seed = Seed()
+    seed = SEED()
     seed.set_key(_key)
     _output_data = seed.encrypt(_input_data)
     print(f'Key {_key}')
@@ -307,7 +307,7 @@ if __name__ == '__main__':
     print('Scenario 3')
     _key = '4706480851E61BE85D74BFB3FD956185'
     _input_data = '83A2F8A288641FB9A4E9A5CC2F131C7D'
-    seed = Seed()
+    seed = SEED()
     seed.set_key(_key)
     _output_data = seed.encrypt(_input_data)
     print(f'Key {_key}')
@@ -323,7 +323,7 @@ if __name__ == '__main__':
     print('Scenario 4')
     _key = '28DBC3BC49FFD87DCFA509B11D422BE7'
     _input_data = 'B41E6BE2EBA84A148E2EED84593C5EC7'
-    seed = Seed()
+    seed = SEED()
     seed.set_key(_key)
     _output_data = seed.encrypt(_input_data)
     print(f'Key {_key}')
