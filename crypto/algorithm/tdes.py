@@ -17,9 +17,7 @@ class TDES(DES):
                  iv: Optional[Union[str, np.ndarray]] = None):
         super(TDES, self).__init__(key=key, iv=iv)
 
-        self.operation = 0
-
-        self._working_buffer = np.zeros((self._block_size,), dtype=np.uint8)
+        self._operation = 0
 
     def _validate_key_size(self):
         try:
@@ -51,10 +49,10 @@ class TDES(DES):
     def get_round_key(self, round_no: int) -> np.ndarray:
         if self._round_key is None:
             raise ValueError('Key is not set')
-        return self._round_key[self.operation, round_no]
+        return self._round_key[self._operation, round_no]
 
     def set_operation(self, operation):
-        self.operation = operation
+        self._operation = operation
 
     def encrypt_one_block(self, buffer: np.ndarray):
         self._initial_permutation(buffer)
@@ -75,13 +73,13 @@ class TDES(DES):
     def decrypt_one_block(self, buffer: np.ndarray):
         self._initial_permutation(buffer)
 
-        self.set_operation(0)
+        self.set_operation(2)
         super(DES, self).decrypt_one_block(buffer)
 
         self.set_operation(1)
         super(DES, self).encrypt_one_block(buffer)
 
-        self.set_operation(2)
+        self.set_operation(0)
         super(DES, self).decrypt_one_block(buffer)
 
         self._inverse_initial_permutation(buffer)
