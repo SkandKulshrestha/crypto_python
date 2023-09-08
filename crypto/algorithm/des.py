@@ -1,19 +1,27 @@
+# import external library
 import numpy as np
 import warnings
 
+# from import external library
 from enum import IntEnum
-from feistel_cipher import FeistelCipher
 from typing import Optional, Union, Tuple
+
+# from import internal library
 from bitwise import Bitwise
+from feistel_cipher import FeistelCipher
 from warning_crypto import WithdrawnWarning, KeyParityWarning
 
 
 class DESKeySize(IntEnum):
+    # DES 64-bit key
     DES_64_BIT_KEY = 8
 
 
 class DES(FeistelCipher):
+    # bits rotation table
     _KEY_SHIFT = (1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1)
+
+    # S-boxes table
     _S_BOXES = (
         # S1
         (

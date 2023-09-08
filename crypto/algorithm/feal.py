@@ -85,6 +85,16 @@ class FEAL(FeistelCipher, ABC):
     def _round_function(self, buffer: np.ndarray, key: np.ndarray):
         pass
 
+    @staticmethod
+    def rot2(x: np.uint8) -> np.uint8:
+        return np.uint8(x << 2 | x >> 6)
+
+    def _s0(self, x1: np.uint8, x2: np.uint8) -> np.uint8:
+        return self.rot2(x1 + x2)
+
+    def _s1(self, x1: np.uint8, x2: np.uint8) -> np.uint8:
+        return self.rot2(x1 + x2 + 1)
+
     def _fk(self, left: np.ndarray, right: np.ndarray):
         pass
 

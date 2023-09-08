@@ -1,16 +1,28 @@
+# import external library
 import numpy as np
 
-from symmetric import Symmetric
+# from import external library
 from abc import ABC
 from typing import Optional, Union, Any, Tuple
+
+# from import internal library
+from symmetric import Symmetric
 from bitwise import Bitwise
 
 
 class FeistelCipher(Symmetric, ABC):
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None,
-                 iv: Optional[Union[str, np.ndarray]] = None,
-                 no_of_rounds: int = 0, block_size: int = 0):
-        super(FeistelCipher, self).__init__(key=key, iv=iv, no_of_rounds=no_of_rounds, block_size=block_size)
+    def __init__(
+            self,
+            key: Optional[Union[str, np.ndarray]] = None,
+            iv: Optional[Union[str, np.ndarray]] = None,
+            no_of_rounds: int = 0,
+            block_size: int = 0):
+        super(FeistelCipher, self).__init__(
+            key=key,
+            iv=iv,
+            no_of_rounds=no_of_rounds,
+            block_size=block_size
+        )
 
     def _split_lr(self, buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError('Provide the definition of method to split the buffer into left and right')
@@ -60,3 +72,10 @@ class FeistelCipher(Symmetric, ABC):
         buffer = self._merge_lr(left=left, right=right)
 
         return buffer
+
+
+if __name__ == '__main__':
+    try:
+        FeistelCipher()
+    except NotImplementedError:
+        print('FeistelCipher interface cannot be instantiate')
