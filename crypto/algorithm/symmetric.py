@@ -23,7 +23,9 @@ class SymmetricModesOfOperation(IntEnum):
     # Cipher feedback
     CFB = 4,
     # Counter
-    CTR = 5
+    CTR = 5,
+    # Galois/Counter Mode
+    GCM = 6
 
 
 class Symmetric(ABC):
@@ -70,6 +72,7 @@ class Symmetric(ABC):
         if pad != PaddingScheme.M0:
             raise NotImplementedError('Yet to be implemented. Coming soon...')
 
+        # create padding object
         self.padding = Padding(pad)
 
     def _validate_block_size(self):

@@ -4,3 +4,11 @@ class KeyParityWarning(Warning):
 
 class WithdrawnWarning(Warning):
     pass
+
+
+class DeprecatedWarning(Warning):
+    pass
+
+
+class DisallowedWarning(Warning):
+    pass

@@ -6,7 +6,8 @@ from abc import ABC
 from typing import Optional, Union, Any, Tuple
 
 # from import internal library
-from symmetric import Symmetric
+from symmetric import Symmetric, SymmetricModesOfOperation
+from padding import PaddingScheme
 from bitwise import Bitwise
 
 
@@ -16,12 +17,16 @@ class FeistelCipher(Symmetric, ABC):
             key: Optional[Union[str, np.ndarray]] = None,
             iv: Optional[Union[str, np.ndarray]] = None,
             no_of_rounds: int = 0,
-            block_size: int = 0):
+            block_size: int = 0,
+            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
+            pad: PaddingScheme = PaddingScheme.M0):
         super(FeistelCipher, self).__init__(
             key=key,
             iv=iv,
             no_of_rounds=no_of_rounds,
-            block_size=block_size
+            block_size=block_size,
+            mode=mode,
+            pad=pad
         )
 
     def _split_lr(self, buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:

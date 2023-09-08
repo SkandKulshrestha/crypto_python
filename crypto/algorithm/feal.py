@@ -1,13 +1,17 @@
+# import external library
 import numpy as np
 import warnings
 
-from enum import IntEnum
-from algorithm.bitwise import Bitwise
-from algorithm.utility import Utility
-from feistel_cipher import FeistelCipher
+# from import external library
 from abc import ABC
+from enum import IntEnum
+
+# from import internal library
+from bitwise import Bitwise
+from utility import Utility
+from feistel_cipher import FeistelCipher
 from typing import Optional, Union, Tuple
-from warning_crypto import WithdrawnWarning, KeyParityWarning
+from warning_crypto import WithdrawnWarning
 
 
 class FEALKeySize(IntEnum):

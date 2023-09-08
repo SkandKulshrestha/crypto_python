@@ -9,6 +9,8 @@ from typing import Optional, Union, Tuple
 # from import internal library
 from bitwise import Bitwise
 from feistel_cipher import FeistelCipher
+from symmetric import SymmetricModesOfOperation
+from padding import PaddingScheme
 from warning_crypto import WithdrawnWarning, KeyParityWarning
 
 
@@ -88,9 +90,20 @@ class DES(FeistelCipher):
         )
     )
 
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None,
-                 iv: Optional[Union[str, np.ndarray]] = None):
-        super(DES, self).__init__(key=key, iv=iv, no_of_rounds=16, block_size=8)
+    def __init__(
+            self,
+            key: Optional[Union[str, np.ndarray]] = None,
+            iv: Optional[Union[str, np.ndarray]] = None,
+            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
+            pad: PaddingScheme = PaddingScheme.M0):
+        super(DES, self).__init__(
+            key=key,
+            iv=iv,
+            no_of_rounds=16,
+            block_size=8,
+            mode=mode,
+            pad=pad
+        )
 
         self._working_buffer = np.zeros((self._block_size,), dtype=np.uint8)
 
@@ -113,21 +126,33 @@ class DES(FeistelCipher):
             raise ValueError(f'{len(self._key)} is not a valid key size')
 
     def _key_schedule(self):
+        # calculate key size and initialize round key array
         self._key_size = len(self._key)
         self._round_key = np.zeros((self._no_of_rounds, self._block_size), dtype=np.uint8)
 
+        # apply permutation choice 1 on key
         left, right = self._permutation_choice1(self._key)
+
+        # compute and store each round key
         for i in range(self._no_of_rounds):
+            # apply left circular rotation on right part of key
             right = self._left_circular_rotate(right, self._KEY_SHIFT[i])
+
+            # apply left circular rotation on left part of key
             left = self._left_circular_rotate(left, self._KEY_SHIFT[i])
+
+            # apply permutation choice 2 on left and right part to compute round key
             self._permutation_choice2(left, right, self._round_key[i])
 
     def _split_lr(self, buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         half = self._block_size >> 1
 
+        # create a left array of block size and copy left part of buffer
         left = np.zeros((self._block_size,), dtype=buffer.dtype)
         left[:half] = buffer[:half]
 
+        # copy right part of buffer at the starting treating
+        # as right array instead of creating new one
         buffer[:half] = buffer[half:]
         buffer[half:] = np.zeros((half,), dtype=buffer.dtype)
 
@@ -142,7 +167,7 @@ class DES(FeistelCipher):
         return left
 
     def _round_function(self, buffer: np.ndarray, key: np.ndarray):
-        # expansion
+        # apply expansion
         self._expansion(buffer)
         self._xor(buffer, key)
         self._substitution(buffer)
@@ -654,7 +679,9 @@ if __name__ == '__main__':
     print(f'Key {_key}')
     print(f'Plaintext {_input_data}')
     des = DES()
+    warnings.filterwarnings("ignore", category=WithdrawnWarning)
     des.set_key(_key)
+    warnings.resetwarnings()
     _output_data = des.encrypt(_input_data)
     print(f'Ciphertext {_output_data}')
     if _output_data != '85E813540F0AB405':
@@ -721,7 +748,10 @@ if __name__ == '__main__':
     print(f'Key {_key}')
     print(f'Plaintext {_input_data}')
     des = DES()
+    warnings.filterwarnings("ignore", category=WithdrawnWarning)
+    warnings.filterwarnings("ignore", category=KeyParityWarning)
     des.set_key(_key)
+    warnings.resetwarnings()
     _output_data = des.encrypt(_input_data)
     print(f'Ciphertext {_output_data}')
     if _output_data != 'C0B7A8D05F3A829C':

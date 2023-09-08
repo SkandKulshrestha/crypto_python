@@ -1,10 +1,16 @@
+# import external library
 import numpy as np
 import warnings
 
+# from import external library
 from enum import IntEnum
 from typing import Optional, Union
-from warning_crypto import KeyParityWarning
-from algorithm.des import DES
+
+# from import internal library
+from des import DES
+from symmetric import SymmetricModesOfOperation
+from padding import PaddingScheme
+from warning_crypto import DeprecatedWarning, DisallowedWarning, KeyParityWarning
 
 
 class TDESKeySize(IntEnum):
@@ -13,15 +19,26 @@ class TDESKeySize(IntEnum):
 
 
 class TDES(DES):
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None,
-                 iv: Optional[Union[str, np.ndarray]] = None):
-        super(TDES, self).__init__(key=key, iv=iv)
+    def __init__(
+            self,
+            key: Optional[Union[str, np.ndarray]] = None,
+            iv: Optional[Union[str, np.ndarray]] = None,
+            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
+            pad: PaddingScheme = PaddingScheme.M0):
+        super(TDES, self).__init__(
+            key=key,
+            iv=iv,
+            mode=mode,
+            pad=pad)
 
         self._operation = 0
 
     def _validate_key_size(self):
         try:
             TDESKeySize(len(self._key))
+
+            warnings.warn('TDES will be deprecated for all applications through 2023', DeprecatedWarning)
+            warnings.warn('TDES will be disallowed after December 31, 2023', DisallowedWarning)
 
             # check for odd parity
             for k in self._key:
@@ -40,7 +57,7 @@ class TDES(DES):
                 self._round_key[2, :, :] = self._round_key[0, :, :]
                 continue
 
-            left, right = self._permutation_choice1(self._key[operation*8:(operation+1)*8])
+            left, right = self._permutation_choice1(self._key[operation * 8:(operation + 1) * 8])
             for _round in range(self._no_of_rounds):
                 right = self._left_circular_rotate(right, self._KEY_SHIFT[_round])
                 left = self._left_circular_rotate(left, self._KEY_SHIFT[_round])
@@ -94,7 +111,10 @@ if __name__ == '__main__':
     print(f'Key {_key}')
     print(f'Plaintext {_input_data}')
     tdes = TDES()
+    warnings.filterwarnings("ignore", category=DeprecatedWarning)
+    warnings.filterwarnings("ignore", category=DisallowedWarning)
     tdes.set_key(_key)
+    warnings.resetwarnings()
     _output_data = tdes.encrypt(_input_data)
     print(f'Ciphertext {_output_data}')
     if _output_data != '85E813540F0AB405':
@@ -111,7 +131,10 @@ if __name__ == '__main__':
     print(f'Key {_key}')
     print(f'Plaintext {_input_data}')
     tdes = TDES()
+    warnings.filterwarnings("ignore", category=DeprecatedWarning)
+    warnings.filterwarnings("ignore", category=DisallowedWarning)
     tdes.set_key(_key)
+    warnings.resetwarnings()
     _output_data = tdes.encrypt(_input_data)
     print(f'Ciphertext {_output_data}')
     if _output_data != '0467366CF3B1D285':
@@ -128,7 +151,10 @@ if __name__ == '__main__':
     print(f'Key {_key}')
     print(f'Plaintext {_input_data}')
     tdes = TDES()
+    warnings.filterwarnings("ignore", category=DeprecatedWarning)
+    warnings.filterwarnings("ignore", category=DisallowedWarning)
     tdes.set_key(_key)
+    warnings.resetwarnings()
     _output_data = tdes.encrypt(_input_data)
     print(f'Ciphertext {_output_data}')
     if _output_data != '0467366CF3B1D285':
@@ -145,7 +171,10 @@ if __name__ == '__main__':
     print(f'Key {_key}')
     print(f'Plaintext {_input_data}')
     tdes = TDES()
+    warnings.filterwarnings("ignore", category=DeprecatedWarning)
+    warnings.filterwarnings("ignore", category=DisallowedWarning)
     tdes.set_key(_key)
+    warnings.resetwarnings()
     _output_data = tdes.encrypt(_input_data)
     print(f'Ciphertext {_output_data}')
     if _output_data != 'A1DD8F6BD298CC49':

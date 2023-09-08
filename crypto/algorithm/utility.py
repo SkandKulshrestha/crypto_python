@@ -1,6 +1,6 @@
 import numpy as np
 
-from typing import Optional, Union, Tuple
+from typing import Union
 
 
 class Utility:

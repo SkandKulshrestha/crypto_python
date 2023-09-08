@@ -1,9 +1,15 @@
+# import external library
 import numpy as np
 import warnings
 
+# from import external library
 from enum import IntEnum
-from feistel_cipher import FeistelCipher
 from typing import Optional, Union, Tuple
+
+# from import internal library
+from feistel_cipher import FeistelCipher
+from symmetric import SymmetricModesOfOperation
+from padding import PaddingScheme
 
 
 class SEEDKeySize(IntEnum):
@@ -155,9 +161,19 @@ class SEED(FeistelCipher):
         0x3779B99E, 0x6EF3733C, 0xDDE6E678, 0xBBCDCCF1, 0x779B99E3, 0xEF3733C6, 0xDE6E678D, 0xBCDCCF1B
     )
 
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None,
-                 iv: Optional[Union[str, np.ndarray]] = None):
-        super(SEED, self).__init__(key=key, iv=iv, no_of_rounds=16, block_size=16)
+    def __init__(
+            self,
+            key: Optional[Union[str, np.ndarray]] = None,
+            iv: Optional[Union[str, np.ndarray]] = None,
+            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
+            pad: PaddingScheme = PaddingScheme.M0):
+        super(SEED, self).__init__(
+            key=key,
+            iv=iv,
+            no_of_rounds=16,
+            block_size=16,
+            mode=mode,
+            pad=pad)
 
     def _validate_block_size(self):
         if self._block_size != 16:
