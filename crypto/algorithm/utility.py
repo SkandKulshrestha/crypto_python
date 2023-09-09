@@ -31,7 +31,7 @@ class Utility:
         _a = hex(a)[2:]
         if len(_a) & 1:
             _a = f'0{_a}'
-        return _a
+        return _a.upper()
 
     @staticmethod
     def generate_random(length: int) -> str:
@@ -320,6 +320,10 @@ class Utility:
     @staticmethod
     def get_bit_length(a: int) -> int:
         return len(bin(a)[2:])
+
+    @staticmethod
+    def remove_space(a: str) -> str:
+        return a.replace(' ', '').replace('\n', '')
 
 
 if __name__ == '__main__':
