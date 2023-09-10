@@ -3,6 +3,39 @@ from utility import Utility
 
 secp_curves = {
     # T = (p, a, b, G, n, h, S)
+    'secp256k1': (
+        int(Utility.remove_space('''
+            FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE
+            FFFFFC2F
+        '''), 16),
+        int(Utility.remove_space('''
+            00000000 00000000 00000000 00000000 00000000 00000000 00000000
+            00000000
+        '''), 16),
+        int(Utility.remove_space('''
+            00000000 00000000 00000000 00000000 00000000 00000000 00000000
+            00000007
+        '''), 16),
+        int(Utility.remove_space('''
+            79BE667E F9DCBBAC 55A06295 CE870B07 029BFCDB 2DCE28D9 59F2815B
+            16F81798
+        '''), 16),
+        int(Utility.remove_space('''
+            483ADA77 26A3C465 5DA4FBFC 0E1108A8 FD17B448 A6855419 9C47D08F
+            FB10D4B8
+        '''), 16),
+        int(Utility.remove_space('''
+            FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C
+            D0364141
+        '''), 16),
+        int(Utility.remove_space('''
+            01
+        '''), 16),
+        int(Utility.remove_space('''
+            00000000
+        '''), 16)
+    ),
+    # T = (p, a, b, G, n, h, S)
     'secp256r1': (
         int(Utility.remove_space('''
             FFFFFFFF 00000001 00000000 00000000 00000000 FFFFFFFF FFFFFFFF

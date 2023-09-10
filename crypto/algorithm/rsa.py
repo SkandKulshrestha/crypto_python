@@ -30,6 +30,12 @@ class RSAPublicKey:
         return f'n : {self.get_n()}\n' \
                f'e : {self.get_e()}\n'
 
+    def __eq__(self, other):
+        return self.n == other.n and self.e == other.e
+
+    def __ne__(self, other):
+        return self.n != other.n or self.e != other.e
+
     def get_n(self) -> str:
         return Utility.convert_to_hex_string(self.n)
 
@@ -51,6 +57,12 @@ class RSAPrivateKey:
     def __repr__(self):
         return f'n : {self.get_n()}\n' \
                f'd : {self.get_d()}\n'
+
+    def __eq__(self, other):
+        return self.n == other.n and self.d == other.d
+
+    def __ne__(self, other):
+        return self.n != other.n or self.d != other.d
 
     def get_n(self) -> str:
         return Utility.convert_to_hex_string(self.n)
@@ -79,6 +91,20 @@ class RSACRTPrivateKey:
                f'dp : {self.get_dp()}\n' \
                f'dq : {self.get_dq()}\n' \
                f'q_inv : {self.get_q_inv()}\n'
+
+    def __eq__(self, other):
+        return self.p == other.p and \
+               self.q == other.q and \
+               self.dp == other.dp and \
+               self.dq == other.dq and \
+               self.q_inv == other.q_inv
+
+    def __ne__(self, other):
+        return self.p != other.p or \
+               self.q != other.q or \
+               self.dp != other.dp or \
+               self.dq != other.dq or \
+               self.q_inv != other.q_inv
 
     def get_p(self) -> str:
         return Utility.convert_to_hex_string(self.p)

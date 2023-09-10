@@ -1,6 +1,3 @@
-# import external library
-import numpy as np
-
 # from import external library
 from abc import ABC
 from typing import Any, Tuple, Union
@@ -29,6 +26,12 @@ class Point:
         return f'x : {self.get_x()}\n' \
                f'y : {self.get_y()}\n'
 
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def __ne__(self, other):
+        return self.x != other.x or self.y != other.y
+
     def get_x(self) -> str:
         return Utility.convert_to_hex_string(self.x)
 
@@ -53,7 +56,10 @@ class ECCCurve(ABC):
     def _set_domain_parameters(self):
         raise NotImplementedError('Provide the definition of set domain parameters method')
 
-    def _point_addition(self, p_x: int, p_y: int) -> Tuple[int, int]:
+    def _point_negation(self, p_x: int, p_y: int) -> Tuple[int, int]:
+        raise NotImplementedError('Provide the definition of point negation method')
+
+    def _point_addition(self, p_x: int, p_y: int, q_x: int, q_y: int) -> Tuple[int, int]:
         raise NotImplementedError('Provide the definition of point addition method')
 
     def _point_doubling(self, p_x: int, p_y: int) -> Tuple[int, int]:
@@ -65,8 +71,19 @@ class ECCCurve(ABC):
     def get_generating_point(self) -> Point:
         return self.G
 
-    def point_addition(self, point: Point, output_point: Point = None) -> Point:
-        _px, _py = self._point_addition(point.x, point.y)
+    def point_negation(self, point: Point, output_point: Point = None) -> Point:
+        _px, _py = self._point_negation(point.x, point.y)
+
+        if output_point is None:
+            output_point = Point(_px, _py)
+        else:
+            output_point.x = _px
+            output_point.y = _py
+
+        return output_point
+
+    def point_addition(self, point1: Point, point2: Point, output_point: Point = None) -> Point:
+        _px, _py = self._point_addition(point1.x, point1.y, point2.x, point2.y)
 
         if output_point is None:
             output_point = Point(_px, _py)
