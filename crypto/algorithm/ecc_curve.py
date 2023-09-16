@@ -1,51 +1,9 @@
 # from import external library
 from abc import ABC
-from typing import Any, Tuple, Union
+from typing import Tuple
 
-# from import external library
-from utility import Utility
-
-
-class Point:
-    def __init__(self, x: Union[str, int], y: Union[str, int]):
-        if isinstance(x, str):
-            self.set_x(x)
-        elif isinstance(x, int):
-            self.x = x
-        else:
-            raise NotImplementedError('Only "str" or "int" is supported for "x"')
-
-        if isinstance(y, str):
-            self.set_y(y)
-        elif isinstance(y, int):
-            self.y = y
-        else:
-            raise NotImplementedError('Only "str" or "int" is supported for "y"')
-
-    def __repr__(self):
-        return f'x : 0x{self.get_x()}\n' \
-               f'y : 0x{self.get_y()}\n'
-
-    def __eq__(self, other):
-        if isinstance(other, Point):
-            return self.x == other.x and self.y == other.y
-        else:
-            raise SyntaxError('Only "Point" object can be compared')
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def get_x(self) -> str:
-        return Utility.convert_to_hex_string(self.x)
-
-    def set_x(self, x: str):
-        self.x = int(x, 16)
-
-    def get_y(self) -> str:
-        return Utility.convert_to_hex_string(self.y)
-
-    def set_y(self, y: str):
-        self.y = int(y, 16)
+# from import internal library
+from point import Point
 
 
 class ECCCurve(ABC):

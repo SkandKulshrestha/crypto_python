@@ -27,11 +27,33 @@ class Utility:
         return bytes(data).hex().upper()
 
     @staticmethod
-    def convert_to_hex_string(a: int) -> str:
+    def convert_to_int(a: Union[str, int]) -> int:
+        if isinstance(a, str):
+            _a = int(a, 16)
+        elif isinstance(a, int):
+            _a = a
+        else:
+            raise NotImplementedError('Only "str" or "int" is supported')
+        return _a
+
+    @staticmethod
+    def convert_int_to_hex_string(a: int, desired_length: int = 0) -> str:
         _a = hex(a)[2:]
         if len(_a) & 1:
             _a = f'0{_a}'
-        return _a.upper()
+        return _a.rjust(desired_length * 2, '0').upper()
+
+    @staticmethod
+    def convert_hex_string_to_int(a: str) -> int:
+        return int(a.replace(' ', ''), 16)
+
+    @staticmethod
+    def remove_space(a: str) -> str:
+        return a.replace(' ', '').replace('\n', '')
+
+    @staticmethod
+    def remove_space_and_convert_to_int(a: str) -> int:
+        return int(a.replace(' ', '').replace('\n', ''), 16)
 
     @staticmethod
     def generate_random(length: int) -> str:
@@ -51,7 +73,7 @@ class Utility:
         d = n_minus_1
         n_minus_1 = n - 1
 
-        length = len(Utility.convert_to_hex_string(n - 2)) // 2
+        length = len(Utility.convert_int_to_hex_string(n - 2)) // 2
 
         # repeat k times:
         while k:
@@ -105,7 +127,7 @@ class Utility:
         d = n_minus_1
         n_minus_1 = n - 1
 
-        length = len(Utility.convert_to_hex_string(n - 2)) // 2
+        length = len(Utility.convert_int_to_hex_string(n - 2)) // 2
 
         # repeat k times:
         while k:
@@ -320,10 +342,6 @@ class Utility:
     @staticmethod
     def get_bit_length(a: int) -> int:
         return len(bin(a)[2:])
-
-    @staticmethod
-    def remove_space(a: str) -> str:
-        return a.replace(' ', '').replace('\n', '')
 
 
 if __name__ == '__main__':

@@ -5,9 +5,10 @@ import numpy as np
 from enum import IntEnum
 from typing import Any, Tuple, Union
 
-# from import external library
+# from import internal library
 from asymmetric import Asymmetric
 from utility import Utility
+from warning_crypto import InvalidComparison
 
 
 class RSAModulus(IntEnum):
@@ -22,116 +23,118 @@ class RSAModulus(IntEnum):
 
 
 class RSAPublicKey:
-    def __init__(self, n: str, e: str):
-        self.n = int(n, 16)
-        self.e = int(e, 16)
+    def __init__(self, n: Union[str, int], e: Union[str, int]):
+        self.n = Utility.convert_to_int(n)
+        self.e = Utility.convert_to_int(e)
 
     def __repr__(self):
-        return f'n : {self.get_n()}\n' \
-               f'e : {self.get_e()}\n'
+        return f'n : 0x{self.get_n()}\n' \
+               f'e : 0x{self.get_e()}\n'
 
     def __eq__(self, other):
-        return self.n == other.n and self.e == other.e
+        if isinstance(other, RSAPublicKey):
+            return self.n == other.n and self.e == other.e
+        raise InvalidComparison(self, other)
 
     def __ne__(self, other):
-        return self.n != other.n or self.e != other.e
+        return not (self == other)
 
     def get_n(self) -> str:
-        return Utility.convert_to_hex_string(self.n)
+        return Utility.convert_int_to_hex_string(self.n)
 
     def set_n(self, n: str):
         self.n = int(n, 16)
 
     def get_e(self) -> str:
-        return Utility.convert_to_hex_string(self.e)
+        return Utility.convert_int_to_hex_string(self.e)
 
     def set_e(self, e: str):
         self.e = int(e, 16)
 
 
 class RSAPrivateKey:
-    def __init__(self, n: str, d: str):
-        self.n = int(n, 16)
-        self.d = int(d, 16)
+    def __init__(self, n: Union[str, int], d: Union[str, int]):
+        self.n = Utility.convert_to_int(n)
+        self.d = Utility.convert_to_int(d)
 
     def __repr__(self):
-        return f'n : {self.get_n()}\n' \
-               f'd : {self.get_d()}\n'
+        return f'n : 0x{self.get_n()}\n' \
+               f'd : 0x{self.get_d()}\n'
 
     def __eq__(self, other):
-        return self.n == other.n and self.d == other.d
+        if isinstance(other, RSAPrivateKey):
+            return self.n == other.n and self.d == other.d
+        raise InvalidComparison(self, other)
 
     def __ne__(self, other):
-        return self.n != other.n or self.d != other.d
+        return not (self == other)
 
     def get_n(self) -> str:
-        return Utility.convert_to_hex_string(self.n)
+        return Utility.convert_int_to_hex_string(self.n)
 
     def set_n(self, n: str):
         self.n = int(n, 16)
 
     def get_d(self) -> str:
-        return Utility.convert_to_hex_string(self.d)
+        return Utility.convert_int_to_hex_string(self.d)
 
     def set_d(self, d: str):
         self.d = int(d, 16)
 
 
 class RSACRTPrivateKey:
-    def __init__(self, p: str, q: str, dp: str, dq: str, q_inv: str):
-        self.p = int(p, 16)
-        self.q = int(q, 16)
-        self.dp = int(dp, 16)
-        self.dq = int(dq, 16)
-        self.q_inv = int(q_inv, 16)
+    def __init__(self, p: Union[str, int], q: Union[str, int],
+                 dp: Union[str, int], dq: Union[str, int],
+                 q_inv: Union[str, int]):
+        self.p = Utility.convert_to_int(p)
+        self.q = Utility.convert_to_int(q)
+        self.dp = Utility.convert_to_int(dp)
+        self.dq = Utility.convert_to_int(dq)
+        self.q_inv = Utility.convert_to_int(q_inv)
 
     def __repr__(self):
-        return f'p : {self.get_p()}\n' \
-               f'q : {self.get_q()}\n' \
-               f'dp : {self.get_dp()}\n' \
-               f'dq : {self.get_dq()}\n' \
-               f'q_inv : {self.get_q_inv()}\n'
+        return f'p : 0x{self.get_p()}\n' \
+               f'q : 0x{self.get_q()}\n' \
+               f'dp : 0x{self.get_dp()}\n' \
+               f'dq : 0x{self.get_dq()}\n' \
+               f'q_inv : 0x{self.get_q_inv()}\n'
 
     def __eq__(self, other):
-        return self.p == other.p and \
-               self.q == other.q and \
-               self.dp == other.dp and \
-               self.dq == other.dq and \
-               self.q_inv == other.q_inv
+        if isinstance(other, RSACRTPrivateKey):
+            return self.p == other.p and self.q == other.q and \
+                   self.dp == other.dp and self.dq == other.dq and \
+                   self.q_inv == other.q_inv
+        raise InvalidComparison(self, other)
 
     def __ne__(self, other):
-        return self.p != other.p or \
-               self.q != other.q or \
-               self.dp != other.dp or \
-               self.dq != other.dq or \
-               self.q_inv != other.q_inv
+        return not (self == other)
 
     def get_p(self) -> str:
-        return Utility.convert_to_hex_string(self.p)
+        return Utility.convert_int_to_hex_string(self.p)
 
     def set_p(self, p: str):
         self.p = int(p, 16)
 
     def get_q(self) -> str:
-        return Utility.convert_to_hex_string(self.q)
+        return Utility.convert_int_to_hex_string(self.q)
 
     def set_q(self, q: str):
         self.q = int(q, 16)
 
     def get_dp(self) -> str:
-        return Utility.convert_to_hex_string(self.dp)
+        return Utility.convert_int_to_hex_string(self.dp)
 
     def set_dp(self, dp: str):
         self.dp = int(dp, 16)
 
     def get_dq(self) -> str:
-        return Utility.convert_to_hex_string(self.dq)
+        return Utility.convert_int_to_hex_string(self.dq)
 
     def set_dq(self, dq: str):
         self.dq = int(dq, 16)
 
     def get_q_inv(self) -> str:
-        return Utility.convert_to_hex_string(self.q_inv)
+        return Utility.convert_int_to_hex_string(self.q_inv)
 
     def set_q_inv(self, q_inv: str):
         self.q_inv = int(q_inv, 16)
@@ -162,8 +165,8 @@ class RSA(Asymmetric):
             raise ValueError('Public key must be an instance of "RSAPublicKey"')
 
     def _generate_key_pair_from_primes(self, p: int, q: int) -> Tuple[RSAPrivateKey, RSAPublicKey]:
-        print(f'p: {Utility.convert_to_hex_string(p)}')
-        print(f'q: {Utility.convert_to_hex_string(q)}')
+        # print(f'p: 0x{Utility.convert_int_to_hex_string(p)}')
+        # print(f'q: 0x{Utility.convert_int_to_hex_string(q)}')
 
         # step 2: compute n = pq
         n = p * q
@@ -175,7 +178,7 @@ class RSA(Asymmetric):
         p_minus_1 = p - 1
         q_minus_1 = q - 1
         lambda_n = (p_minus_1 * q_minus_1) // Utility.gcd(p_minus_1, q_minus_1)
-        print(f'lambda_n: {Utility.convert_to_hex_string(lambda_n)}')
+        # print(f'lambda_n: 0x{Utility.convert_int_to_hex_string(lambda_n)}')
 
         # step 4: choose an integer e such that 2 < e < λ(n) and gcd(e, λ(n)) = 1;
         # that is, e and λ(n) are co-prime
@@ -199,25 +202,13 @@ class RSA(Asymmetric):
         q_inv = Utility.inverse(q, p)
 
         # create an instance of public key
-        self.public_key = RSAPublicKey(
-            Utility.convert_to_hex_string(n),
-            Utility.convert_to_hex_string(e)
-        )
+        self.public_key = RSAPublicKey(n, e)
 
         # create an instance of private key
-        self.private_key = RSAPrivateKey(
-            Utility.convert_to_hex_string(n),
-            Utility.convert_to_hex_string(d)
-        )
+        self.private_key = RSAPrivateKey(n, d)
 
         # create an instance of crt private key
-        self.crt_private_key = RSACRTPrivateKey(
-            Utility.convert_to_hex_string(p),
-            Utility.convert_to_hex_string(q),
-            Utility.convert_to_hex_string(dp),
-            Utility.convert_to_hex_string(dq),
-            Utility.convert_to_hex_string(q_inv)
-        )
+        self.crt_private_key = RSACRTPrivateKey(p, q, dp, dq, q_inv)
 
         return self.private_key, self.public_key
 
@@ -246,7 +237,7 @@ class RSA(Asymmetric):
         _m = int(input_data, 16)
         _c = Utility.modular_exponentiation(_m, self.public_key.e, self.public_key.n)
 
-        return Utility.convert_to_hex_string(_c)
+        return Utility.convert_int_to_hex_string(_c)
 
     def decrypt(self, input_data: Union[str, np.ndarray]) -> Union[str, np.ndarray]:
         if not isinstance(input_data, str):
@@ -258,7 +249,7 @@ class RSA(Asymmetric):
         _c = int(input_data, 16)
         _m = Utility.modular_exponentiation(_c, self.private_key.d, self.private_key.n)
 
-        return Utility.convert_to_hex_string(_m)
+        return Utility.convert_int_to_hex_string(_m)
 
     def decrypt_crt(self, input_data: Union[str, np.ndarray]) -> Union[str, np.ndarray]:
         if not isinstance(input_data, str):
@@ -279,7 +270,7 @@ class RSA(Asymmetric):
             self.crt_private_key.p * self.crt_private_key.q
         )
 
-        return Utility.convert_to_hex_string(_m)
+        return Utility.convert_int_to_hex_string(_m)
 
     def generate_key_pair_from_p_and_q(self, p: str, q: str) -> Tuple[RSAPrivateKey, RSAPublicKey]:
         prime_bit_length = self.modulus_bit_length // 2
@@ -323,22 +314,47 @@ class RSA(Asymmetric):
 if __name__ == '__main__':
     rsa = RSA(RSAModulus.RSA_MODULUS_1024)
     pr_key, pu_key = rsa.generate_key_pair()
+    crt_key, _ = rsa.get_crt_key_pair()
+
     print(pr_key)
+    print(crt_key)
     print(pu_key)
 
+    m = '05'
     c = rsa.encrypt('05')
-    print(c)
-    m = rsa.decrypt(c)
-    print(m)
-    m = rsa.decrypt_crt(c)
-    print(m)
+    m_decrypt = rsa.decrypt(c)
+    m_decrypt_crt = rsa.decrypt_crt(c)
+    print(f'Encryption of 0x{m} = 0x{c}')
+    print(f'Decryption of 0x{c} = 0x{m_decrypt}')
+    print(f'Decryption of 0x{c} using crt = 0x{m_decrypt_crt}')
 
-    # rsa = RSA(RSAModulus.RSA_MODULUS_1024)
-    # pr_key, pu_key = rsa.generate_key_pair_from_p_and_q(
-    #     p='aea082c57a5f9823a230b4a85d0b64733d8c079e46ca2dde3e18bf5deef5b0f7'
-    #       '20d91b366e679edfed9f3d509e17963ebdd141d90e22a6a0f9ac6d9b47aad42b',
-    #     q='e1a97a9ad69e1b85828e6e255daa61b33bb3d42cfdfbeaa0d4b28b1b4f5b6bd5'
-    #       'a620be6d9bb1c1468fe0a5def57bcc438b7b944503901f7cd2a6ec61e919d6fb'
-    # )
-    # print(pr_key)
-    # print(pu_key)
+    try:
+        print(pu_key == pr_key)
+    except InvalidComparison as _e:
+        print(_e)
+
+    try:
+        print(crt_key == pr_key)
+    except InvalidComparison as _e:
+        print(_e)
+
+    print('-' * 80)
+    rsa = RSA(RSAModulus.RSA_MODULUS_1024)
+    pr_key2, pu_key2 = rsa.generate_key_pair_from_p_and_q(
+        p=crt_key.get_p(),
+        q=crt_key.get_q()
+    )
+    print(pr_key2)
+    print(pu_key2)
+
+    print(f'{pr_key == pr_key2 = }')
+    print(f'{pu_key == pu_key2 = }')
+
+    print('-' * 80)
+    rsa = RSA(RSAModulus.RSA_MODULUS_1024)
+    pr_key3, pu_key3 = rsa.generate_key_pair()
+
+    print(pr_key3)
+    print(pu_key3)
+    print(f'{pr_key == pr_key3 = }')
+    print(f'{pu_key == pu_key3 = }')

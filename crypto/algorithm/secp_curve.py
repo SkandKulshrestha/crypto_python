@@ -1,7 +1,7 @@
 # from import external library
 from typing import Tuple
 
-# from import external library
+# from import internal library
 from ecc_curve import ECCCurve, Point
 from secp_curves import secp_curves
 from utility import Utility
@@ -50,7 +50,7 @@ class SecpCurve(ECCCurve):
         _delta_x = Utility.modulus(q_x - p_x, self.p)
         _delta_y = Utility.modulus(q_y - p_y, self.p)
         if _delta_x == 0:
-            raise PointAtInfinity('Point Addition results in point at infinity')
+            raise PointAtInfinity('Point Addition')
 
         _delta_x_inv = Utility.inverse(_delta_x, self.p)
         _lambda = Utility.modulus(_delta_y * _delta_x_inv, self.p)
@@ -89,7 +89,7 @@ class SecpCurve(ECCCurve):
                     res_x, res_y = self._point_addition(res_x, res_y, p_x, p_y)
                 i += 1
         except PointAtInfinity:
-            raise PointAtInfinity('Point Multiplication results in point at infinity')
+            raise PointAtInfinity('Point Multiplication')
 
         # return res
         return res_x, res_y
@@ -99,7 +99,7 @@ class SecpCurve(ECCCurve):
         r_x, r_y = self._point_negation(q_x, q_y)
 
         if p_x == r_x:
-            raise PointAtInfinity('Point Subtraction results in point at infinity')
+            raise PointAtInfinity('Point Subtraction')
 
         # perform P + R
         return self._point_addition(p_x, p_y, r_x, r_y)
@@ -113,35 +113,35 @@ if __name__ == '__main__':
     _g = curve.get_generating_point()
     print(_g)
 
-    print('1G = internally nothing')
+    print('Calculating 1G = internally nothing')
     _1G_point = curve.point_multiplication(
         scalar='01',
         point=_g
     )
     print(_1G_point)
 
-    print('2G = internally point doubling, i.e., 2 * G')
+    print('Calculating 2G = internally point doubling, i.e., 2 * G')
     _2G_point = curve.point_multiplication(
         scalar='02',
         point=_g
     )
     print(_2G_point)
 
-    print('3G = internally point doubling followed by point addition, 2 * G + G')
+    print('Calculating 3G = internally point doubling followed by point addition, 2 * G + G')
     _3G_point = curve.point_multiplication(
         scalar='03',
         point=_g
     )
     print(_3G_point)
 
-    print('4G = internally point doubling, i.e., 2 * (2 * G)')
+    print('Calculating 4G = internally point doubling, i.e., 2 * (2 * G)')
     _4G_point = curve.point_multiplication(
         scalar='04',
         point=_g
     )
     print(_4G_point)
 
-    print('4G = 3G + G')
+    print('Calculating 4G = 3G + G')
     _4G_point_addition = curve.point_addition(
         point1=_3G_point,
         point2=_1G_point
@@ -151,7 +151,7 @@ if __name__ == '__main__':
     if _4G_point != _4G_point_addition:
         raise ValueError('Point multiplication and point addition is not yielding same result')
 
-    print('3G = 4G - G')
+    print('Calculating 3G = 4G - G')
     _3G_point_subtraction = curve.point_subtraction(
         point1=_4G_point_addition,
         point2=_1G_point
@@ -161,14 +161,14 @@ if __name__ == '__main__':
     if _3G_point != _3G_point_subtraction:
         raise ValueError('Point multiplication and point subtraction is not yielding same result')
 
-    print('5G = internally point doubling followed by point addition, i.e., (2 * (2 * G)) + G')
+    print('Calculating 5G = internally point doubling followed by point addition, i.e., (2 * (2 * G)) + G')
     _5G_point = curve.point_multiplication(
         scalar='05',
         point=_g
     )
     print(_5G_point)
 
-    print('5G = 3G + 2G')
+    print('Calculating 5G = 3G + 2G')
     _5G_point_addition = curve.point_addition(
         point1=_3G_point,
         point2=_2G_point
@@ -179,17 +179,17 @@ if __name__ == '__main__':
         raise ValueError('Point multiplication and point addition is not yielding same result')
 
     print(f'n: {curve.n}')
-    print(f'n: 0x{Utility.convert_to_hex_string(curve.n)}')
+    print(f'n: 0x{Utility.convert_int_to_hex_string(curve.n)}')
 
-    print('(n-1)G')
+    print('Calculating (n-1)G')
     _n_minus1_G_point = curve.point_multiplication(
-        scalar=Utility.convert_to_hex_string(curve.n - 1),
+        scalar=Utility.convert_int_to_hex_string(curve.n - 1),
         point=_g
     )
     print(_n_minus1_G_point)
 
     try:
-        print('nG = (n-1)G + 1')
+        print('Calculating nG = (n-1)G + 1')
         _nG_point_addition = curve.point_addition(
             point1=_n_minus1_G_point,
             point2=_1G_point
@@ -197,26 +197,28 @@ if __name__ == '__main__':
         print(_nG_point_addition)
     except PointAtInfinity as e:
         print(e)
+        print()
 
     try:
-        print('nG')
+        print('Calculating nG')
         _nG_point = curve.point_multiplication(
-            scalar=Utility.convert_to_hex_string(curve.n),
+            scalar=Utility.convert_int_to_hex_string(curve.n),
             point=_g
         )
         print(_nG_point)
     except PointAtInfinity as e:
         print(e)
+        print()
 
-    print('(n+1)G')
+    print('Calculating (n+1)G')
     _n_plus1_G_point = curve.point_multiplication(
-        scalar=Utility.convert_to_hex_string(curve.n + 1),
+        scalar=Utility.convert_int_to_hex_string(curve.n + 1),
         point=_g
     )
     print(_n_plus1_G_point)
 
     try:
-        print('nG = (n+1)G - G')
+        print('Calculating nG = (n+1)G - G')
         _nG_point_subtraction = curve.point_subtraction(
             point1=_n_plus1_G_point,
             point2=_1G_point
@@ -224,12 +226,13 @@ if __name__ == '__main__':
         print(_nG_point_subtraction)
     except PointAtInfinity as e:
         print(e)
+        print()
 
     d = Utility.remove_space(
         '7C 2B A2 9B F1 48 9C C5 EF 70 91 C0 6D E4 8C C1 A6 63 02 88 D5 4E 94 A4 D0 F9 CC CF A3 90 2C 32'
     )
 
-    print('dG')
+    print('Calculating dG')
     _dG_point = curve.point_multiplication(
         scalar=d,
         point=_g
