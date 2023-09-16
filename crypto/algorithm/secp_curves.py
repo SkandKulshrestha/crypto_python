@@ -25,9 +25,7 @@ secp_curves = {
         Utility.remove_space_and_convert_to_int('''
             01
         '''),  # h
-        Utility.remove_space_and_convert_to_int('''
-            00000000
-        ''')  # S
+        None  # S
     ),
     # T = (p, a, b, G, n, h, S)
     'secp192r1': (
@@ -79,9 +77,7 @@ secp_curves = {
         Utility.remove_space_and_convert_to_int('''
             01
         '''),  # h
-        Utility.remove_space_and_convert_to_int('''
-            00000000
-        ''')  # S
+        None  # S
     ),
     # T = (p, a, b, G, n, h, S)
     'secp224r1': (
@@ -139,9 +135,7 @@ secp_curves = {
         Utility.remove_space_and_convert_to_int('''
             01
         '''),  # h
-        Utility.remove_space_and_convert_to_int('''
-            00000000
-        ''')  # S
+        None  # S
     ),
     # T = (p, a, b, G, n, h, S)
     'secp256r1': (

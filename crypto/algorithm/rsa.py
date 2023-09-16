@@ -171,7 +171,7 @@ class RSA(Asymmetric):
         # step 2: compute n = pq
         n = p * q
 
-        # step 2: compute λ(n), where λ is Carmichael's totient function.
+        # step 3: compute λ(n), where λ is Carmichael's totient function.
         # Since n = pq, λ(n) = lcm(λ(p), λ(q)), and since p and q are prime,
         # λ(p) = φ(p) = p − 1, and likewise λ(q) = q − 1. Hence λ(n) = lcm(p − 1, q − 1)
         #       lcm(a, b) = |ab| / gcd(a, b)

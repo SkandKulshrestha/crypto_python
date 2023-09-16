@@ -228,16 +228,16 @@ if __name__ == '__main__':
         print(e)
         print()
 
-    d = Utility.remove_space(
+    _d = Utility.remove_space(
         '7C 2B A2 9B F1 48 9C C5 EF 70 91 C0 6D E4 8C C1 A6 63 02 88 D5 4E 94 A4 D0 F9 CC CF A3 90 2C 32'
     )
 
     print('Calculating dG')
     _dG_point = curve.point_multiplication(
-        scalar=d,
+        scalar=_d,
         point=_g
     )
-    print(f'd : 0x{d}')
+    print(f'd : 0x{_d}')
     print(_dG_point)
     _x = _dG_point.get_x()
     _y = _dG_point.get_y()
