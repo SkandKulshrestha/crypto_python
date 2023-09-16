@@ -12,3 +12,7 @@ class DeprecatedWarning(Warning):
 
 class DisallowedWarning(Warning):
     pass
+
+
+class PointAtInfinity(BaseException):
+    pass

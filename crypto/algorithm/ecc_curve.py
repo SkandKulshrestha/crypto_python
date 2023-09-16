@@ -23,14 +23,17 @@ class Point:
             raise NotImplementedError('Only "str" or "int" is supported for "y"')
 
     def __repr__(self):
-        return f'x : {self.get_x()}\n' \
-               f'y : {self.get_y()}\n'
+        return f'x : 0x{self.get_x()}\n' \
+               f'y : 0x{self.get_y()}\n'
 
     def __eq__(self, other):
-        return self.x == other.x and self.y == other.y
+        if isinstance(other, Point):
+            return self.x == other.x and self.y == other.y
+        else:
+            raise SyntaxError('Only "Point" object can be compared')
 
     def __ne__(self, other):
-        return self.x != other.x or self.y != other.y
+        return not (self == other)
 
     def get_x(self) -> str:
         return Utility.convert_to_hex_string(self.x)
@@ -51,10 +54,10 @@ class ECCCurve(ABC):
         self.G = None  # a base point
 
         # set domain parameters of the curve
-        self._set_domain_parameters()
+        self._initialize_domain_parameters()
 
-    def _set_domain_parameters(self):
-        raise NotImplementedError('Provide the definition of set domain parameters method')
+    def _initialize_domain_parameters(self):
+        raise NotImplementedError('Provide the definition of initialize domain parameters method')
 
     def _point_negation(self, p_x: int, p_y: int) -> Tuple[int, int]:
         raise NotImplementedError('Provide the definition of point negation method')
@@ -67,6 +70,9 @@ class ECCCurve(ABC):
 
     def _point_multiplication(self, d: int, p_x: int, p_y: int) -> Tuple[int, int]:
         raise NotImplementedError('Provide the definition of point multiplication method')
+
+    def _point_subtraction(self, p_x: int, p_y: int, q_x: int, q_y: int) -> Tuple[int, int]:
+        raise NotImplementedError('Provide the definition of point subtraction method')
 
     def get_generating_point(self) -> Point:
         return self.G
@@ -106,6 +112,17 @@ class ECCCurve(ABC):
 
     def point_multiplication(self, scalar: str, point: Point, output_point: Point = None):
         _px, _py = self._point_multiplication(int(scalar, 16), point.x, point.y)
+
+        if output_point is None:
+            output_point = Point(_px, _py)
+        else:
+            output_point.x = _px
+            output_point.y = _py
+
+        return output_point
+
+    def point_subtraction(self, point1: Point, point2: Point, output_point: Point = None) -> Point:
+        _px, _py = self._point_subtraction(point1.x, point1.y, point2.x, point2.y)
 
         if output_point is None:
             output_point = Point(_px, _py)

@@ -291,7 +291,7 @@ class Utility:
             r = temp
 
         if r > 1:
-            raise RuntimeError('a is not invertible')
+            raise RuntimeError(f'base ({a}) is not invertible for the given modulus ({n})')
 
         if t < 0:
             t += n

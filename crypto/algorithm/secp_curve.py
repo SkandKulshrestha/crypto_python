@@ -5,15 +5,16 @@ from typing import Tuple
 from ecc_curve import ECCCurve, Point
 from secp_curves import secp_curves
 from utility import Utility
+from warning_crypto import PointAtInfinity
 
 
 class SecpCurve(ECCCurve):
     def __init__(self, curve_name: str):
         super(SecpCurve, self).__init__(curve_name)
 
-    def _set_domain_parameters(self):
+    def _initialize_domain_parameters(self):
         if self.curve_name in secp_curves:
-            self.p, self.n, self.a, self.b, self.g_x, self.g_y, self.h, self.S = secp_curves[self.curve_name]
+            self.p, self.a, self.b, self.g_x, self.g_y, self.n, self.h, self.S = secp_curves[self.curve_name]
         else:
             raise ValueError(f'"{self.curve_name}" is not supported')
 
@@ -48,6 +49,9 @@ class SecpCurve(ECCCurve):
         # _lambda = (q_y - p_y) / (q_x - p_x)
         _delta_x = Utility.modulus(q_x - p_x, self.p)
         _delta_y = Utility.modulus(q_y - p_y, self.p)
+        if _delta_x == 0:
+            raise PointAtInfinity('Point Addition results in point at infinity')
+
         _delta_x_inv = Utility.inverse(_delta_x, self.p)
         _lambda = Utility.modulus(_delta_y * _delta_x_inv, self.p)
 
@@ -56,11 +60,10 @@ class SecpCurve(ECCCurve):
         return self._calculate_x_y(_lambda, p_x, p_y, q_x)
 
     def _point_doubling(self, p_x: int, p_y: int) -> Tuple[int, int]:
-        # P + Q = R, Q = p => 2P = R
+        # P + Q = R, Q = P => 2P = R
         # _lambda = (3 * (p_x**2) + a) / (2 * p_y)
         _denominator = Utility.modulus(2 * p_y, self.p)
-        _numerator = Utility.modulus(3 * p_x * p_x, self.p)
-        _numerator = Utility.modulus(_numerator + self.a, self.p)
+        _numerator = Utility.modulus(3 * p_x * p_x + self.a, self.p)
         _denominator_inv = Utility.inverse(_denominator, self.p)
         _lambda = Utility.modulus(_numerator * _denominator_inv, self.p)
 
@@ -76,17 +79,30 @@ class SecpCurve(ECCCurve):
         # let res = P
         res_x, res_y = p_x, p_y
 
-        # traversing from second MSB to LSB
-        while i < len(bits):
-            # res = res + res # double
-            res_x, res_y = self._point_doubling(res_x, res_y)
-            if bits[i] == '1':
-                # res = res + P  # add
-                res_x, res_y = self._point_addition(res_x, res_y, p_x, p_y)
-            i += 1
+        try:
+            # traversing from second MSB to LSB
+            while i < len(bits):
+                # res = res + res # double
+                res_x, res_y = self._point_doubling(res_x, res_y)
+                if bits[i] == '1':
+                    # res = res + P  # add
+                    res_x, res_y = self._point_addition(res_x, res_y, p_x, p_y)
+                i += 1
+        except PointAtInfinity:
+            raise PointAtInfinity('Point Multiplication results in point at infinity')
 
         # return res
         return res_x, res_y
+
+    def _point_subtraction(self, p_x: int, p_y: int, q_x: int, q_y: int) -> Tuple[int, int]:
+        # R = -Q
+        r_x, r_y = self._point_negation(q_x, q_y)
+
+        if p_x == r_x:
+            raise PointAtInfinity('Point Subtraction results in point at infinity')
+
+        # perform P + R
+        return self._point_addition(p_x, p_y, r_x, r_y)
 
 
 if __name__ == '__main__':
@@ -135,6 +151,16 @@ if __name__ == '__main__':
     if _4G_point != _4G_point_addition:
         raise ValueError('Point multiplication and point addition is not yielding same result')
 
+    print('3G = 4G - G')
+    _3G_point_subtraction = curve.point_subtraction(
+        point1=_4G_point_addition,
+        point2=_1G_point
+    )
+    print(_3G_point_subtraction)
+
+    if _3G_point != _3G_point_subtraction:
+        raise ValueError('Point multiplication and point subtraction is not yielding same result')
+
     print('5G = internally point doubling followed by point addition, i.e., (2 * (2 * G)) + G')
     _5G_point = curve.point_multiplication(
         scalar='05',
@@ -152,12 +178,35 @@ if __name__ == '__main__':
     if _5G_point != _5G_point_addition:
         raise ValueError('Point multiplication and point addition is not yielding same result')
 
-    print('nG')
-    _nG_point = curve.point_multiplication(
-        scalar=Utility.convert_to_hex_string(curve.n),
+    print(f'n: {curve.n}')
+    print(f'n: 0x{Utility.convert_to_hex_string(curve.n)}')
+
+    print('(n-1)G')
+    _n_minus1_G_point = curve.point_multiplication(
+        scalar=Utility.convert_to_hex_string(curve.n - 1),
         point=_g
     )
-    print(_nG_point)
+    print(_n_minus1_G_point)
+
+    try:
+        print('nG = (n-1)G + 1')
+        _nG_point_addition = curve.point_addition(
+            point1=_n_minus1_G_point,
+            point2=_1G_point
+        )
+        print(_nG_point_addition)
+    except PointAtInfinity as e:
+        print(e)
+
+    try:
+        print('nG')
+        _nG_point = curve.point_multiplication(
+            scalar=Utility.convert_to_hex_string(curve.n),
+            point=_g
+        )
+        print(_nG_point)
+    except PointAtInfinity as e:
+        print(e)
 
     print('(n+1)G')
     _n_plus1_G_point = curve.point_multiplication(
@@ -166,9 +215,34 @@ if __name__ == '__main__':
     )
     print(_n_plus1_G_point)
 
-    print('(n+1)G = nG + 1')
-    _n_plus1_G_point_addition = curve.point_addition(
-        point1=_nG_point,
-        point2=_1G_point
+    try:
+        print('nG = (n+1)G - G')
+        _nG_point_subtraction = curve.point_subtraction(
+            point1=_n_plus1_G_point,
+            point2=_1G_point
+        )
+        print(_nG_point_subtraction)
+    except PointAtInfinity as e:
+        print(e)
+
+    d = Utility.remove_space(
+        '7C 2B A2 9B F1 48 9C C5 EF 70 91 C0 6D E4 8C C1 A6 63 02 88 D5 4E 94 A4 D0 F9 CC CF A3 90 2C 32'
     )
-    print(_n_plus1_G_point_addition)
+
+    print('dG')
+    _dG_point = curve.point_multiplication(
+        scalar=d,
+        point=_g
+    )
+    print(f'd : 0x{d}')
+    print(_dG_point)
+    _x = _dG_point.get_x()
+    _y = _dG_point.get_y()
+    if _x != Utility.remove_space(
+            'DB C9 12 12 CB 30 E5 C8 84 02 5A C8 ED 8F B6 1C C2 55 8E CA 72 E1 38 70 01 AF 5B A1 31 C9 51 EE'
+    ):
+        raise ValueError
+    if _y != Utility.remove_space(
+            '22 C0 F5 0E E3 39 FB A7 00 67 94 8A C5 1D 0E 48 0B 40 CD 6E EE EB 9D 05 BB F3 E9 F6 78 39 D8 EB'
+    ):
+        raise ValueError
