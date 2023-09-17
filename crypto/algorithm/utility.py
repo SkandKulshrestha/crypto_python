@@ -29,7 +29,7 @@ class Utility:
     @staticmethod
     def convert_to_int(a: Union[str, int]) -> int:
         if isinstance(a, str):
-            _a = int(a, 16)
+            _a = int(a.replace(' ', ''), 16)
         elif isinstance(a, int):
             _a = a
         else:

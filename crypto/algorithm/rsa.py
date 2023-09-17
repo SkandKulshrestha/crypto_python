@@ -43,13 +43,13 @@ class RSAPublicKey:
         return Utility.convert_int_to_hex_string(self.n)
 
     def set_n(self, n: str):
-        self.n = int(n, 16)
+        self.n = Utility.convert_hex_string_to_int(n)
 
     def get_e(self) -> str:
         return Utility.convert_int_to_hex_string(self.e)
 
     def set_e(self, e: str):
-        self.e = int(e, 16)
+        self.e = Utility.convert_hex_string_to_int(e)
 
 
 class RSAPrivateKey:
@@ -73,13 +73,13 @@ class RSAPrivateKey:
         return Utility.convert_int_to_hex_string(self.n)
 
     def set_n(self, n: str):
-        self.n = int(n, 16)
+        self.n = Utility.convert_hex_string_to_int(n)
 
     def get_d(self) -> str:
         return Utility.convert_int_to_hex_string(self.d)
 
     def set_d(self, d: str):
-        self.d = int(d, 16)
+        self.d = Utility.convert_hex_string_to_int(d)
 
 
 class RSACRTPrivateKey:
@@ -113,31 +113,31 @@ class RSACRTPrivateKey:
         return Utility.convert_int_to_hex_string(self.p)
 
     def set_p(self, p: str):
-        self.p = int(p, 16)
+        self.p = Utility.convert_hex_string_to_int(p)
 
     def get_q(self) -> str:
         return Utility.convert_int_to_hex_string(self.q)
 
     def set_q(self, q: str):
-        self.q = int(q, 16)
+        self.q = Utility.convert_hex_string_to_int(q)
 
     def get_dp(self) -> str:
         return Utility.convert_int_to_hex_string(self.dp)
 
     def set_dp(self, dp: str):
-        self.dp = int(dp, 16)
+        self.dp = Utility.convert_hex_string_to_int(dp)
 
     def get_dq(self) -> str:
         return Utility.convert_int_to_hex_string(self.dq)
 
     def set_dq(self, dq: str):
-        self.dq = int(dq, 16)
+        self.dq = Utility.convert_hex_string_to_int(dq)
 
     def get_q_inv(self) -> str:
         return Utility.convert_int_to_hex_string(self.q_inv)
 
     def set_q_inv(self, q_inv: str):
-        self.q_inv = int(q_inv, 16)
+        self.q_inv = Utility.convert_hex_string_to_int(q_inv)
 
 
 class RSA(Asymmetric):

@@ -4,6 +4,7 @@ from typing import Tuple
 
 # from import internal library
 from point import Point
+from utility import Utility
 
 
 class ECCCurve(ABC):
@@ -69,7 +70,7 @@ class ECCCurve(ABC):
         return output_point
 
     def point_multiplication(self, scalar: str, point: Point, output_point: Point = None):
-        _px, _py = self._point_multiplication(int(scalar, 16), point.x, point.y)
+        _px, _py = self._point_multiplication(Utility.convert_hex_string_to_int(scalar), point.x, point.y)
 
         if output_point is None:
             output_point = Point(_px, _py)

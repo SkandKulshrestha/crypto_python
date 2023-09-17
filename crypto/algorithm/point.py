@@ -23,17 +23,17 @@ class Point:
     def __ne__(self, other):
         return not (self == other)
 
+    def set_x(self, x: str):
+        self.x = Utility.convert_hex_string_to_int(x)
+
     def get_x(self) -> str:
         return Utility.convert_int_to_hex_string(self.x)
 
-    def set_x(self, x: str):
-        self.x = int(x, 16)
+    def set_y(self, y: str):
+        self.y = Utility.convert_hex_string_to_int(y)
 
     def get_y(self) -> str:
         return Utility.convert_int_to_hex_string(self.y)
-
-    def set_y(self, y: str):
-        self.y = int(y, 16)
 
 
 if __name__ == '__main__':
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     p3 = Point(5, '4')
     print(p3)
 
-    p4 = Point('4', '5')
+    p4 = Point('4 4A', '5')
     print(p4)
 
     print(f'{p1 == p2 = }')
