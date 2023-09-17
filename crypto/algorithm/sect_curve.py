@@ -94,6 +94,7 @@ if __name__ == '__main__':
     print('G')
     _g = curve.get_generating_point()
     print(_g)
+    print(f'f(x) = 0x{Utility.convert_int_to_hex_string(curve.f)}')
 
     # print('Calculating 1G = internally nothing')
     # _1G_point = curve.point_multiplication(

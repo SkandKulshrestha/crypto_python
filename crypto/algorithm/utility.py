@@ -343,6 +343,13 @@ class Utility:
     def get_bit_length(a: int) -> int:
         return len(bin(a)[2:])
 
+    @staticmethod
+    def create_gf_2_pow_m_polynomial(powers: Tuple[int, ...]) -> int:
+        _polynomial = 0
+        for power in powers:
+            _polynomial |= 1 << power
+        return _polynomial
+
 
 if __name__ == '__main__':
     for i in range(5, 100):

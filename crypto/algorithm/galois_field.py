@@ -1,5 +1,5 @@
 # from import external library
-from typing import Union
+from typing import Union, Tuple
 
 # from import internal library
 from utility import Utility
@@ -30,25 +30,54 @@ class GaloisField:
     def set_order(self, order: str):
         self.order = Utility.convert_hex_string_to_int(order)
 
-    def get_order(self):
+    def get_order(self) -> str:
         return Utility.convert_int_to_hex_string(self.order)
 
-    def add(self, a: int, b: int):
+    def add(self, a: int, b: int) -> int:
         return (a + b) % self.order
 
-    def subtract(self, a: int, b: int):
+    def subtract(self, a: int, b: int) -> int:
         return (a - b) % self.order
 
-    def multiply(self, a: int, b: int):
+    def multiply(self, a: int, b: int) -> int:
         return (a * b) % self.order
 
-    def divide(self, a: int, b: int):
+    def divide(self, a: int, b: int) -> int:
         b_inv = self.inverse(b)
         return self.multiply(a, b_inv)
 
-    def inverse(self, a: int):
+    def inverse(self, a: int) -> int:
         # TODO: remove dependency of pow function
         return pow(a, -1, self.order)
+
+
+class GaloisFieldElement:
+    def __init__(self):
+        pass
+
+
+class GaloisFieldTwoPower:
+    def __init__(self, polynomial: Union[str, int, Tuple[int, ...]]):
+        if isinstance(polynomial, tuple):
+            self.polynomial = Utility.create_gf_2_pow_m_polynomial(polynomial)
+        else:
+            self.polynomial = Utility.convert_to_int(polynomial)
+
+    def add(self, a: int, b: int) -> int:
+        return self.polynomial
+
+    def subtract(self, a: int, b: int) -> int:
+        return self.polynomial
+
+    def multiply(self, a: int, b: int) -> int:
+        return self.polynomial
+
+    def divide(self, a: int, b: int) -> int:
+        b_inv = self.inverse(b)
+        return self.multiply(a, b_inv)
+
+    def inverse(self, a: int) -> int:
+        return self.polynomial
 
 
 if __name__ == '__main__':

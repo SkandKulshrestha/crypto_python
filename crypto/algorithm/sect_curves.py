@@ -5,9 +5,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect163k1': (
         163,  # m
-        Utility.remove_space_and_convert_to_int('''
-            163 7 6 3 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (163, 7, 6, 3, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
             00 00000000 00000000 00000000 00000000 00000001
         '''),  # a
@@ -31,9 +31,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect163r1': (
         163,  # m
-        Utility.remove_space_and_convert_to_int('''
-            163 7 6 3 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (163, 7, 6, 3, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
             07 B6882CAA EFA84F95 54FF8428 BD88E246 D2782AE2
         '''),  # a
@@ -59,9 +59,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect163r2': (
         163,  # m
-        Utility.remove_space_and_convert_to_int('''
-            163 7 6 3 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (163, 7, 6, 3, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
             00 00000000 00000000 00000000 00000000 00000001
         '''),  # a
@@ -87,9 +87,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect233k1': (
         233,  # m
-        Utility.remove_space_and_convert_to_int('''
-            233 74 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (233, 74, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
                 0000 00000000 00000000 00000000 00000000 00000000 00000000
             00000000
@@ -118,9 +118,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect233r1': (
         233,  # m
-        Utility.remove_space_and_convert_to_int('''
-            233 74 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (233, 74, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
                 0000 00000000 00000000 00000000 00000000 00000000 00000000
             00000001
@@ -151,9 +151,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect239k1': (
         239,  # m
-        Utility.remove_space_and_convert_to_int('''
-            239 158 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (239, 158, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
                 0000 00000000 00000000 00000000 00000000 00000000 00000000
             00000000
@@ -182,9 +182,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect283k1': (
         283,  # m
-        Utility.remove_space_and_convert_to_int('''
-            283 12 7 5 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (283, 12, 7, 5, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
             00000000 00000000 00000000 00000000 00000000 00000000 00000000
             00000000 00000000
@@ -213,9 +213,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect283r1': (
         283,  # m
-        Utility.remove_space_and_convert_to_int('''
-            283 12 7 5 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (283, 12, 7, 5, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
             00000000 00000000 00000000 00000000 00000000 00000000 00000000
             00000000 00000001
@@ -246,9 +246,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect409k1': (
         409,  # m
-        Utility.remove_space_and_convert_to_int('''
-            409 87 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (409, 87, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
             00000000 00000000 00000000 00000000 00000000 00000000 00000000
             00000000 00000000 00000000 00000000 00000000 00000000
@@ -277,9 +277,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect409r1': (
         409,  # m
-        Utility.remove_space_and_convert_to_int('''
-            409 87 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (409, 87, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
             00000000 00000000 00000000 00000000 00000000 00000000 00000000
             00000000 00000000 00000000 00000000 00000000 00000001
@@ -310,9 +310,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect571k1': (
         571,  # m
-        Utility.remove_space_and_convert_to_int('''
-            571 10 5 2 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (571, 10, 5, 2, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
             00000000 00000000 00000000 00000000 00000000 00000000 00000000
             00000000 00000000 00000000 00000000 00000000 00000000 00000000
@@ -346,9 +346,9 @@ sect_curves = {
     #  T = (m, f(x), a, b, G, n, h, S)
     'sect571r1': (
         571,  # m
-        Utility.remove_space_and_convert_to_int('''
-            571 10 5 2 0
-        '''),  # f(x)
+        Utility.create_gf_2_pow_m_polynomial(
+            (571, 10, 5, 2, 0)
+        ),  # f(x)
         Utility.remove_space_and_convert_to_int('''
             00000000 00000000 00000000 00000000 00000000 00000000 00000000
             00000000 00000000 00000000 00000000 00000000 00000000 00000000
