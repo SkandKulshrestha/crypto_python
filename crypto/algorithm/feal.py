@@ -1,6 +1,6 @@
 # import external library
 import numpy as np
-import warnings
+# import warnings
 
 # from import external library
 from abc import ABC
@@ -11,9 +11,7 @@ from typing import Optional, Union, Tuple
 from bitwise import Bitwise
 from utility import Utility
 from feistel_cipher import FeistelCipher
-from symmetric import SymmetricModesOfOperation
-from padding import PaddingScheme
-from warning_crypto import WithdrawnWarning
+# from warning_crypto import WithdrawnWarning
 
 
 class FEALKeySize(IntEnum):
@@ -25,22 +23,8 @@ class FEALXKeySize(IntEnum):
 
 
 class FEAL(FeistelCipher, ABC):
-    def __init__(
-            self,
-            key: Optional[Union[str, np.ndarray]] = None,
-            iv: Optional[Union[str, np.ndarray]] = None,
-            no_of_rounds: int = 4,
-            key_parity: bool = True,
-            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
-            pad: PaddingScheme = PaddingScheme.M0):
-        super(FEAL, self).__init__(
-            key=key,
-            iv=iv,
-            no_of_rounds=no_of_rounds,
-            block_size=8,
-            mode=mode,
-            pad=pad
-        )
+    def __init__(self, key: Optional[Union[str, np.ndarray]] = None, no_of_rounds: int = 4, key_parity: bool = True):
+        super(FEAL, self).__init__(key=key, no_of_rounds=no_of_rounds, block_size=8)
 
         # store key parity
         self.key_parity = key_parity
@@ -186,7 +170,7 @@ class FEAL(FeistelCipher, ABC):
         left[2] ^= self._round_key[n][0]
         left[3] ^= self._round_key[n][1]
 
-    def encrypt_one_block(self, buffer: np.ndarray) -> np.ndarray:
+    def _encrypt(self, buffer: np.ndarray) -> np.ndarray:
         # split the plaintext block into two equal pieces: (L[0], R[0])
         left, right = self._split_lr(buffer)
         temp = np.zeros(right.shape, dtype=right.dtype)
@@ -212,7 +196,7 @@ class FEAL(FeistelCipher, ABC):
 
         return buffer
 
-    def decrypt_one_block(self, buffer: np.ndarray) -> np.ndarray:
+    def _decrypt(self, buffer: np.ndarray) -> np.ndarray:
         # split the plaintext block into two equal pieces: (R[n], L[n])
         right, left = self._split_lr(buffer)
         temp = np.zeros(right.shape, dtype=right.dtype)
@@ -240,69 +224,23 @@ class FEAL(FeistelCipher, ABC):
 
 
 class FEAL4(FEAL):
-    def __init__(
-            self,
-            key: Optional[Union[str, np.ndarray]] = None,
-            iv: Optional[Union[str, np.ndarray]] = None,
-            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
-            pad: PaddingScheme = PaddingScheme.M0):
-        super(FEAL4, self).__init__(
-            key=key,
-            iv=iv,
-            no_of_rounds=4,
-            mode=mode,
-            pad=pad
-        )
+    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
+        super(FEAL4, self).__init__(key=key, no_of_rounds=4)
 
 
 class FEAL8(FEAL):
-    def __init__(
-            self,
-            key: Optional[Union[str, np.ndarray]] = None,
-            iv: Optional[Union[str, np.ndarray]] = None,
-            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
-            pad: PaddingScheme = PaddingScheme.M0):
-        super(FEAL8, self).__init__(
-            key=key,
-            iv=iv,
-            no_of_rounds=8,
-            mode=mode,
-            pad=pad
-        )
+    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
+        super(FEAL8, self).__init__(key=key, no_of_rounds=8)
 
 
 class FEALn(FEAL):
-    def __init__(
-            self,
-            key: Optional[Union[str, np.ndarray]] = None,
-            iv: Optional[Union[str, np.ndarray]] = None,
-            no_of_rounds: int = 0,
-            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
-            pad: PaddingScheme = PaddingScheme.M0):
-        super(FEALn, self).__init__(
-            key=key,
-            iv=iv,
-            no_of_rounds=no_of_rounds,
-            mode=mode,
-            pad=pad
-        )
+    def __init__(self, key: Optional[Union[str, np.ndarray]] = None, no_of_rounds: int = 0):
+        super(FEALn, self).__init__(key=key, no_of_rounds=no_of_rounds)
 
 
 class FEALnx(FEAL):
-    def __init__(
-            self,
-            key: Optional[Union[str, np.ndarray]] = None,
-            iv: Optional[Union[str, np.ndarray]] = None,
-            no_of_rounds: int = 0,
-            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
-            pad: PaddingScheme = PaddingScheme.M0):
-        super(FEALnx, self).__init__(
-            key=key,
-            iv=iv,
-            no_of_rounds=no_of_rounds,
-            mode=mode,
-            pad=pad
-        )
+    def __init__(self, key: Optional[Union[str, np.ndarray]] = None, no_of_rounds: int = 0):
+        super(FEALnx, self).__init__(key=key, no_of_rounds=no_of_rounds)
 
     def _validate_key_size(self):
         try:

@@ -64,19 +64,25 @@ class GaloisFieldTwoPower:
             self.polynomial = Utility.convert_to_int(polynomial)
 
     def add(self, a: int, b: int) -> int:
-        return self.polynomial
+        return (a ^ b) ^ self.polynomial
 
     def subtract(self, a: int, b: int) -> int:
-        return self.polynomial
+        return (a ^ b) ^ self.polynomial
 
     def multiply(self, a: int, b: int) -> int:
-        return self.polynomial
+        # TODO: Implement it
+        if a or b:
+            raise NotImplementedError("Coming soon...")
+        return (a ^ b) ^ self.polynomial
 
     def divide(self, a: int, b: int) -> int:
         b_inv = self.inverse(b)
         return self.multiply(a, b_inv)
 
     def inverse(self, a: int) -> int:
+        # TODO: Implement it
+        if a:
+            raise NotImplementedError("Coming soon...")
         return self.polynomial
 
 

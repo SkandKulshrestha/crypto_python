@@ -8,8 +8,6 @@ from typing import Optional, Union, Tuple
 
 # from import internal library
 from feistel_cipher import FeistelCipher
-from symmetric import SymmetricModesOfOperation
-from padding import PaddingScheme
 
 
 class SEEDKeySize(IntEnum):
@@ -161,19 +159,8 @@ class SEED(FeistelCipher):
         0x3779B99E, 0x6EF3733C, 0xDDE6E678, 0xBBCDCCF1, 0x779B99E3, 0xEF3733C6, 0xDE6E678D, 0xBCDCCF1B
     )
 
-    def __init__(
-            self,
-            key: Optional[Union[str, np.ndarray]] = None,
-            iv: Optional[Union[str, np.ndarray]] = None,
-            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
-            pad: PaddingScheme = PaddingScheme.M0):
-        super(SEED, self).__init__(
-            key=key,
-            iv=iv,
-            no_of_rounds=16,
-            block_size=16,
-            mode=mode,
-            pad=pad)
+    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
+        super(SEED, self).__init__(key=key, no_of_rounds=16, block_size=16)
 
     def _validate_block_size(self):
         if self._block_size != 16:
@@ -272,17 +259,17 @@ class SEED(FeistelCipher):
             for j in range(4):
                 buffer[i * 4 + j] = (state[i] >> (24 - j * 8)) & 0xFF
 
-    def encrypt_one_block(self, buffer: np.ndarray):
+    def _encrypt(self, buffer: np.ndarray):
         _buffer = np.zeros((4,), dtype=np.uint32)
         self._convert_to_state(buffer, _buffer)
-        super(SEED, self).encrypt_one_block(_buffer)
+        super(SEED, self)._encrypt(_buffer)
         self._convert_from_state(buffer, _buffer)
         return buffer
 
-    def decrypt_one_block(self, buffer: np.ndarray):
+    def _decrypt(self, buffer: np.ndarray):
         _buffer = np.zeros((4,), dtype=np.uint32)
         self._convert_to_state(buffer, _buffer)
-        super(SEED, self).decrypt_one_block(_buffer)
+        super(SEED, self)._decrypt(_buffer)
         self._convert_from_state(buffer, _buffer)
         return buffer
 

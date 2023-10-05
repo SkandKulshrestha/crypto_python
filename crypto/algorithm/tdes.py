@@ -8,8 +8,6 @@ from typing import Optional, Union
 
 # from import internal library
 from des import DES
-from symmetric import SymmetricModesOfOperation
-from padding import PaddingScheme
 from warning_crypto import DeprecatedWarning, DisallowedWarning, KeyParityWarning
 
 
@@ -19,17 +17,8 @@ class TDESKeySize(IntEnum):
 
 
 class TDES(DES):
-    def __init__(
-            self,
-            key: Optional[Union[str, np.ndarray]] = None,
-            iv: Optional[Union[str, np.ndarray]] = None,
-            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
-            pad: PaddingScheme = PaddingScheme.M0):
-        super(TDES, self).__init__(
-            key=key,
-            iv=iv,
-            mode=mode,
-            pad=pad)
+    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
+        super(TDES, self).__init__(key=key)
 
         self._operation = 0
 
@@ -66,38 +55,39 @@ class TDES(DES):
     def get_round_key(self, round_no: int) -> np.ndarray:
         if self._round_key is None:
             raise ValueError('Key is not set')
+
         return self._round_key[self._operation, round_no]
 
     def set_operation(self, operation):
         self._operation = operation
 
-    def encrypt_one_block(self, buffer: np.ndarray):
+    def _encrypt(self, buffer: np.ndarray):
         self._initial_permutation(buffer)
 
         self.set_operation(0)
-        super(DES, self).encrypt_one_block(buffer)
+        super(DES, self)._encrypt(buffer)
 
         self.set_operation(1)
-        super(DES, self).decrypt_one_block(buffer)
+        super(DES, self)._decrypt(buffer)
 
         self.set_operation(2)
-        super(DES, self).encrypt_one_block(buffer)
+        super(DES, self)._encrypt(buffer)
 
         self._inverse_initial_permutation(buffer)
 
         return buffer
 
-    def decrypt_one_block(self, buffer: np.ndarray):
+    def _decrypt(self, buffer: np.ndarray):
         self._initial_permutation(buffer)
 
         self.set_operation(2)
-        super(DES, self).decrypt_one_block(buffer)
+        super(DES, self)._decrypt(buffer)
 
         self.set_operation(1)
-        super(DES, self).encrypt_one_block(buffer)
+        super(DES, self)._encrypt(buffer)
 
         self.set_operation(0)
-        super(DES, self).decrypt_one_block(buffer)
+        super(DES, self)._decrypt(buffer)
 
         self._inverse_initial_permutation(buffer)
 

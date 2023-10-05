@@ -9,8 +9,6 @@ from typing import Optional, Union, Tuple
 # from import internal library
 from bitwise import Bitwise
 from feistel_cipher import FeistelCipher
-from symmetric import SymmetricModesOfOperation
-from padding import PaddingScheme
 from warning_crypto import WithdrawnWarning, KeyParityWarning
 
 
@@ -90,20 +88,8 @@ class DES(FeistelCipher):
         )
     )
 
-    def __init__(
-            self,
-            key: Optional[Union[str, np.ndarray]] = None,
-            iv: Optional[Union[str, np.ndarray]] = None,
-            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
-            pad: PaddingScheme = PaddingScheme.M0):
-        super(DES, self).__init__(
-            key=key,
-            iv=iv,
-            no_of_rounds=16,
-            block_size=8,
-            mode=mode,
-            pad=pad
-        )
+    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
+        super(DES, self).__init__(key=key, no_of_rounds=16, block_size=8)
 
         self._working_buffer = np.zeros((self._block_size,), dtype=np.uint8)
 
@@ -657,15 +643,15 @@ class DES(FeistelCipher):
         key &= 0x0FFFFFFF
         return np.uint32(key)
 
-    def encrypt_one_block(self, buffer: np.ndarray):
+    def _encrypt(self, buffer: np.ndarray) -> np.ndarray:
         self._initial_permutation(buffer)
-        super(DES, self).encrypt_one_block(buffer)
+        super(DES, self)._encrypt(buffer)
         self._inverse_initial_permutation(buffer)
         return buffer
 
-    def decrypt_one_block(self, buffer: np.ndarray):
+    def _decrypt(self, buffer: np.ndarray) -> np.ndarray:
         self._initial_permutation(buffer)
-        super(DES, self).decrypt_one_block(buffer)
+        super(DES, self)._decrypt(buffer)
         self._inverse_initial_permutation(buffer)
         return buffer
 

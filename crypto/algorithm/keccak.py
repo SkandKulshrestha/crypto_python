@@ -1,6 +1,6 @@
 import numpy as np
 
-from bitwise import Bitwise
+# from bitwise import Bitwise
 
 
 class KeccakP:
@@ -34,13 +34,16 @@ class KeccakP:
         return self.state
 
     def _theta(self):
-        Bitwise.xor()
+        # Bitwise.xor()
         c = np.bitwise_xor(self.state[:, 0, :], self.state[:, 1, :])
         c = np.bitwise_xor(c, self.state[:, 2, :])
         c = np.bitwise_xor(c, self.state[:, 3, :])
         c = np.bitwise_xor(c, self.state[:, 4, :])
 
         d = c
+        # TODO: Implement it
+        if d:
+            raise NotImplementedError("Coming soon...")
 
     def _rho(self):
         pass

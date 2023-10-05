@@ -6,28 +6,13 @@ from abc import ABC
 from typing import Optional, Union, Any, Tuple
 
 # from import internal library
-from symmetric import Symmetric, SymmetricModesOfOperation
-from padding import PaddingScheme
+from symmetric import Symmetric
 from bitwise import Bitwise
 
 
 class FeistelCipher(Symmetric, ABC):
-    def __init__(
-            self,
-            key: Optional[Union[str, np.ndarray]] = None,
-            iv: Optional[Union[str, np.ndarray]] = None,
-            no_of_rounds: int = 0,
-            block_size: int = 0,
-            mode: SymmetricModesOfOperation = SymmetricModesOfOperation.ECB,
-            pad: PaddingScheme = PaddingScheme.M0):
-        super(FeistelCipher, self).__init__(
-            key=key,
-            iv=iv,
-            no_of_rounds=no_of_rounds,
-            block_size=block_size,
-            mode=mode,
-            pad=pad
-        )
+    def __init__(self, key: Optional[Union[str, np.ndarray]] = None, no_of_rounds: int = 0, block_size: int = 0):
+        super(FeistelCipher, self).__init__(key=key, no_of_rounds=no_of_rounds, block_size=block_size)
 
     def _split_lr(self, buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError('Provide the definition of method to split the buffer into left and right')
@@ -38,7 +23,7 @@ class FeistelCipher(Symmetric, ABC):
     def _round_function(self, buffer: np.ndarray, round_key: np.ndarray) -> np.ndarray:
         raise NotImplementedError('Provide the definition of method to perform single round')
 
-    def encrypt_one_block(self, buffer: np.ndarray) -> np.ndarray:
+    def _encrypt(self, buffer: np.ndarray) -> np.ndarray:
         # split the plaintext block into two equal pieces: (L[0], R[0])
         left, right = self._split_lr(buffer)
         temp = np.zeros(right.shape, dtype=right.dtype)
@@ -58,7 +43,7 @@ class FeistelCipher(Symmetric, ABC):
 
         return buffer
 
-    def decrypt_one_block(self, buffer: np.ndarray) -> np.ndarray:
+    def _decrypt(self, buffer: np.ndarray) -> np.ndarray:
         # split the plaintext block into two equal pieces: (R[n], L[n])
         right, left = self._split_lr(buffer)
         temp = np.zeros(right.shape, dtype=right.dtype)
