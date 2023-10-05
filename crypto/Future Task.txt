@@ -1,0 +1,41 @@
+Implementation:
+===============
+
+Symmetric:
+    FEAL, Serpent, Twofish, RC6, MARS, GOST(GOST 28147-89),
+    IDEA, Blowfish
+    Block Cipher Modes, MAC
+
+Asymmetric:
+    DSA, ECC, DH, ElGamal
+
+Hash Function:
+    CRC, MD4, MD5, SHA1, SHA2, SHA3
+
+Authentication:
+    MILENAGE, TUAK, GSM A3A8
+
+
+Validation:
+===========
+
+Symmetric:
+    DES, TDES, SEED, Rijndael, AES
+
+Asymmetric:
+    RSA
+
+
+Done:
+=====
+Pass :)
+
+
+Exploration:
+============
+- NIST hash function competition
+- CAESAR Competition
+- NIST Post-Quantum Cryptography Standardization
+- RC2, RC3, RC4, RC5, RC6
+- SM algorithms-based encryption scheme for large genomic data files
+    Ref: https://www.sciencedirect.com/science/article/pii/S2352864820302911
