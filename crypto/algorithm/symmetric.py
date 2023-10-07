@@ -3,23 +3,21 @@ import numpy as np
 
 # from import external library
 from abc import ABC
-from typing import Optional, Union
+from typing import Union
 
 # from import internal library
 from utility import Utility
 
 
 class Symmetric(ABC):
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None, no_of_rounds: int = 0, block_size: int = 0):
-        # store key
-        self.key = key
-
+    def __init__(self, block_size: int = 0, no_of_rounds: int = 0):
         # store block size and number of rounds
         self._block_size = block_size
         self._no_of_rounds = no_of_rounds
 
-        # initialize key size, key (numpy array), and iv (numpy array)
+        # initialize key size, key (numpy array)
         self._key_size = 0
+        self.key = None
         self._key = None
 
         # initialize round key (numpy array)
@@ -27,10 +25,6 @@ class Symmetric(ABC):
 
         # validate block size
         self._validate_block_size()
-
-        # set key (numpy array) if passed
-        if key is not None:
-            self.set_key(key)
 
     def _validate_block_size(self):
         raise NotImplementedError('Provide the definition of validate block size method')
@@ -81,7 +75,7 @@ class Symmetric(ABC):
 
         # process each block
         for i in range(no_of_blocks):
-            _start = i * no_of_blocks
+            _start = i * self._block_size
             _end = _start + self._block_size
             output_data[_start: _end] = self._encrypt(output_data[_start: _end])
 
@@ -103,7 +97,7 @@ class Symmetric(ABC):
 
         # process each block
         for i in range(no_of_blocks):
-            _start = i * no_of_blocks
+            _start = i * self._block_size
             _end = _start + self._block_size
             output_data[_start: _end] = self._decrypt(output_data[_start: _end])
 
@@ -116,10 +110,10 @@ class Symmetric(ABC):
     def get_block_size(self) -> int:
         return self._block_size
 
-    def get_encrypt(self):
+    def get_encrypt_method(self):
         return self._encrypt
 
-    def get_decrypt(self):
+    def get_decrypt_method(self):
         return self._decrypt
 
 

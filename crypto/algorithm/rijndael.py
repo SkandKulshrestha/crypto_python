@@ -3,7 +3,6 @@ import numpy as np
 
 # from import external library
 from enum import IntEnum
-from typing import Optional, Union
 
 # from import internal library
 from symmetric import Symmetric
@@ -11,14 +10,14 @@ from bitwise import Bitwise
 
 
 class RijndaelKeySize(IntEnum):
-    RIJNDAEL_128_BIT_KEY = 16,
-    RIJNDAEL_192_BIT_KEY = 24,
+    RIJNDAEL_128_BIT_KEY = 16
+    RIJNDAEL_192_BIT_KEY = 24
     RIJNDAEL_256_BIT_KEY = 32
 
 
 class RijndaelBlockSize(IntEnum):
-    RIJNDAEL_128_BIT_BLOCK = 16,
-    RIJNDAEL_192_BIT_BLOCK = 24,
+    RIJNDAEL_128_BIT_BLOCK = 16
+    RIJNDAEL_192_BIT_BLOCK = 24
     RIJNDAEL_256_BIT_BLOCK = 32
 
 
@@ -112,9 +111,8 @@ class Rijndael(Symmetric):
         (1, 3, 4),
     )
 
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None,
-                 block_size: RijndaelBlockSize = RijndaelBlockSize.RIJNDAEL_128_BIT_BLOCK):
-        super(Rijndael, self).__init__(key=key, block_size=block_size.value)
+    def __init__(self, block_size: RijndaelBlockSize = RijndaelBlockSize.RIJNDAEL_128_BIT_BLOCK):
+        super(Rijndael, self).__init__(block_size=block_size.value)
 
         # number of columns
         self._nb = self._block_size >> 2

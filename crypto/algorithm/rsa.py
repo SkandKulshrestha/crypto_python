@@ -12,13 +12,13 @@ from warning_crypto import InvalidComparison
 
 
 class RSAModulus(IntEnum):
-    RSA_MODULUS_32 = 4,
-    RSA_MODULUS_64 = 8,
-    RSA_MODULUS_128 = 16,
-    RSA_MODULUS_256 = 32,
-    RSA_MODULUS_512 = 64,
-    RSA_MODULUS_1024 = 128,
-    RSA_MODULUS_2048 = 256,
+    RSA_MODULUS_32 = 4
+    RSA_MODULUS_64 = 8
+    RSA_MODULUS_128 = 16
+    RSA_MODULUS_256 = 32
+    RSA_MODULUS_512 = 64
+    RSA_MODULUS_1024 = 128
+    RSA_MODULUS_2048 = 256
     RSA_MODULUS_4096 = 512
 
 

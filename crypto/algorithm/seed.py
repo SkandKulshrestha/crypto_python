@@ -4,7 +4,7 @@ import warnings
 
 # from import external library
 from enum import IntEnum
-from typing import Optional, Union, Tuple
+from typing import Tuple
 
 # from import internal library
 from feistel_cipher import FeistelCipher
@@ -159,8 +159,8 @@ class SEED(FeistelCipher):
         0x3779B99E, 0x6EF3733C, 0xDDE6E678, 0xBBCDCCF1, 0x779B99E3, 0xEF3733C6, 0xDE6E678D, 0xBCDCCF1B
     )
 
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(SEED, self).__init__(key=key, no_of_rounds=16, block_size=16)
+    def __init__(self):
+        super(SEED, self).__init__(block_size=16, no_of_rounds=16)
 
     def _validate_block_size(self):
         if self._block_size != 16:

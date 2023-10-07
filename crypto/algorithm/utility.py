@@ -1,7 +1,9 @@
+# import external library
 import sys
 import numpy as np
 import math
 
+# from import external library
 from typing import Union, Tuple
 
 
@@ -338,6 +340,15 @@ class Utility:
             exponent >>= 1
             base = Utility.modulus(base * base, modulus)
         return result
+
+    @staticmethod
+    def get_byte_length(a: Union[str, np.ndarray]):
+        if isinstance(a, str):
+            return (len(a) + 1) // 2
+        elif isinstance(a, np.ndarray):
+            return len(a)
+        else:
+            raise NotImplementedError('Only "str" or "np.ndarray" is supported')
 
     @staticmethod
     def get_bit_length(a: int) -> int:

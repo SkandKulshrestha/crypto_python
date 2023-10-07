@@ -5,12 +5,14 @@ import numpy as np
 # from import external library
 from abc import ABC
 from enum import IntEnum
-from typing import Optional, Union, Tuple
+from typing import Tuple
 
 # from import internal library
 from bitwise import Bitwise
 from utility import Utility
 from feistel_cipher import FeistelCipher
+
+
 # from warning_crypto import WithdrawnWarning
 
 
@@ -23,8 +25,8 @@ class FEALXKeySize(IntEnum):
 
 
 class FEAL(FeistelCipher, ABC):
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None, no_of_rounds: int = 4, key_parity: bool = True):
-        super(FEAL, self).__init__(key=key, no_of_rounds=no_of_rounds, block_size=8)
+    def __init__(self, no_of_rounds: int = 4, key_parity: bool = True):
+        super(FEAL, self).__init__(block_size=8, no_of_rounds=no_of_rounds)
 
         # store key parity
         self.key_parity = key_parity
@@ -224,23 +226,23 @@ class FEAL(FeistelCipher, ABC):
 
 
 class FEAL4(FEAL):
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(FEAL4, self).__init__(key=key, no_of_rounds=4)
+    def __init__(self):
+        super(FEAL4, self).__init__(no_of_rounds=4)
 
 
 class FEAL8(FEAL):
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(FEAL8, self).__init__(key=key, no_of_rounds=8)
+    def __init__(self):
+        super(FEAL8, self).__init__(no_of_rounds=8)
 
 
 class FEALn(FEAL):
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None, no_of_rounds: int = 0):
-        super(FEALn, self).__init__(key=key, no_of_rounds=no_of_rounds)
+    def __init__(self, no_of_rounds: int = 0):
+        super(FEALn, self).__init__(no_of_rounds=no_of_rounds)
 
 
 class FEALnx(FEAL):
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None, no_of_rounds: int = 0):
-        super(FEALnx, self).__init__(key=key, no_of_rounds=no_of_rounds)
+    def __init__(self, no_of_rounds: int = 0):
+        super(FEALnx, self).__init__(no_of_rounds=no_of_rounds)
 
     def _validate_key_size(self):
         try:

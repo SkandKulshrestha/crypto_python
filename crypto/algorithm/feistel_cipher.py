@@ -3,7 +3,7 @@ import numpy as np
 
 # from import external library
 from abc import ABC
-from typing import Optional, Union, Any, Tuple
+from typing import Any, Tuple
 
 # from import internal library
 from symmetric import Symmetric
@@ -11,8 +11,8 @@ from bitwise import Bitwise
 
 
 class FeistelCipher(Symmetric, ABC):
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None, no_of_rounds: int = 0, block_size: int = 0):
-        super(FeistelCipher, self).__init__(key=key, no_of_rounds=no_of_rounds, block_size=block_size)
+    def __init__(self, block_size: int = 0, no_of_rounds: int = 0):
+        super(FeistelCipher, self).__init__(block_size=block_size, no_of_rounds=no_of_rounds)
 
     def _split_lr(self, buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError('Provide the definition of method to split the buffer into left and right')

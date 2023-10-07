@@ -1,13 +1,15 @@
+# import external library
 import numpy as np
 
+# from import external library
 from enum import IntEnum
 
 
 class PaddingScheme(IntEnum):
-    M0 = 0,
-    M1 = 1,
-    M2 = 2,
-    M3 = 3,
+    M0 = 0
+    M1 = 1
+    M2 = 2
+    M3 = 3
     PKCS = 4
 
 

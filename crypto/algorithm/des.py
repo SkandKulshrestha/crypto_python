@@ -4,7 +4,7 @@ import warnings
 
 # from import external library
 from enum import IntEnum
-from typing import Optional, Union, Tuple
+from typing import Tuple
 
 # from import internal library
 from bitwise import Bitwise
@@ -88,8 +88,8 @@ class DES(FeistelCipher):
         )
     )
 
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(DES, self).__init__(key=key, no_of_rounds=16, block_size=8)
+    def __init__(self):
+        super(DES, self).__init__(block_size=8, no_of_rounds=16)
 
         self._working_buffer = np.zeros((self._block_size,), dtype=np.uint8)
 

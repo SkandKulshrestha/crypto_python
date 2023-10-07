@@ -1,21 +1,21 @@
-import numpy as np
-
+# from import external library
 from enum import IntEnum
-from typing import Optional, Union
+
+# from import internal library
 from rijndael import Rijndael, RijndaelBlockSize
 
 
 class AESKeySize(IntEnum):
-    AES_128_BIT_KEY = 16,
-    AES_192_BIT_KEY = 24,
+    AES_128_BIT_KEY = 16
+    AES_192_BIT_KEY = 24
     AES_256_BIT_KEY = 32
 
 
 class AES(Rijndael):
     KEY_SHIFT = (1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1)
 
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(AES, self).__init__(key=key, block_size=RijndaelBlockSize.RIJNDAEL_128_BIT_BLOCK)
+    def __init__(self):
+        super(AES, self).__init__(block_size=RijndaelBlockSize.RIJNDAEL_128_BIT_BLOCK)
 
     def _validate_block_size(self):
         if self._block_size != 16:

@@ -4,7 +4,6 @@ import warnings
 
 # from import external library
 from enum import IntEnum
-from typing import Optional, Union
 
 # from import internal library
 from des import DES
@@ -12,13 +11,13 @@ from warning_crypto import DeprecatedWarning, DisallowedWarning, KeyParityWarnin
 
 
 class TDESKeySize(IntEnum):
-    TDES_128_BIT_KEY = 16,
+    TDES_128_BIT_KEY = 16
     TDES_192_BIT_KEY = 24
 
 
 class TDES(DES):
-    def __init__(self, key: Optional[Union[str, np.ndarray]] = None):
-        super(TDES, self).__init__(key=key)
+    def __init__(self):
+        super(TDES, self).__init__()
 
         self._operation = 0
 
