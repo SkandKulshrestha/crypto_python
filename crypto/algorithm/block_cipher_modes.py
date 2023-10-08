@@ -19,6 +19,9 @@ class SymmetricAlgorithm(Enum):
 
 
 class BlockCipherModesOfOperation(IntEnum):
+    CONFIDENTIAL = 0xFF00
+    INTEGRITY = 0x80FF
+
     # 1-bit Chaining Cipher: CBC, OFB, CFB, CTR
     CHAINING_BIT = 0x8000
 
@@ -60,7 +63,7 @@ class BlockCipherConfidentialityModes(IntEnum):
     CTR = BlockCipherModesOfOperation.CHAINING_BIT | 0x0400
 
 
-class BlockCipherIntegrityModes(IntEnum):
+class BlockCipherAuthenticationModes(IntEnum):
     # Cipher Block Chaining-Message Authentication Code
     # 0x8080
     CBC_MAC = BlockCipherModesOfOperation.CHAINING_BIT | BlockCipherModesOfOperation.MAC_BIT | 0x0000
@@ -85,9 +88,9 @@ class BlockCipherIntegrityModes(IntEnum):
 # Authenticated Encryption with Additional Data
 class AEADModes(IntEnum):
     # Counter with Cipher Block Chaining-Message Authentication Code
-    # 0x
-    CCM = BlockCipherConfidentialityModes.CTR | BlockCipherIntegrityModes.CBC_MAC
+    # 0x8480
+    CCM = BlockCipherConfidentialityModes.CTR | BlockCipherAuthenticationModes.CBC_MAC
 
     # Galois/Counter Mode
-    # 0x
-    GCM = BlockCipherConfidentialityModes.CTR | BlockCipherIntegrityModes.GMAC
+    # 0x84A0
+    GCM = BlockCipherConfidentialityModes.CTR | BlockCipherAuthenticationModes.GMAC

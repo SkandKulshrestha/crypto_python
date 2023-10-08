@@ -7,7 +7,7 @@ from typing import Union
 # from import internal library
 from bitwise import Bitwise
 from block_cipher_modes import SymmetricAlgorithm, \
-    BlockCipherIntegrityModes, BlockCipherModesOfOperation
+    BlockCipherAuthenticationModes, BlockCipherModesOfOperation
 from padding import Padding, PaddingScheme
 from utility import Utility
 
@@ -16,8 +16,8 @@ class MessageAuthenticationCode:
     def __init__(
             self,
             algorithm: SymmetricAlgorithm,
-            mode: BlockCipherIntegrityModes,
-            pad: PaddingScheme = PaddingScheme.M0
+            mode: BlockCipherAuthenticationModes,
+            pad: PaddingScheme = PaddingScheme.M1
     ):
         # create an algorithm instance
         SymmetricAlgorithm(algorithm)
@@ -26,7 +26,7 @@ class MessageAuthenticationCode:
         self.encrypt_one_block = self.algorithm.get_encrypt_method()
 
         # verify and store mode
-        BlockCipherIntegrityModes(mode)
+        BlockCipherAuthenticationModes(mode)
         self.mode = mode
         self.mac = mode.value & BlockCipherModesOfOperation.MAC
 
@@ -35,7 +35,7 @@ class MessageAuthenticationCode:
         self.pad = pad
 
         # create padding object
-        self.padding = Padding(pad)
+        self.padding = Padding(pad, self._block_size)
 
         # initialize and set iv (numpy array)
         self.iv = '00' * self._block_size
@@ -85,7 +85,7 @@ class MessageAuthenticationCode:
             _start = i * self._block_size
             _end = _start + self._block_size
 
-            if self.mode == BlockCipherIntegrityModes.CBC_MAC:
+            if self.mode == BlockCipherAuthenticationModes.CBC_MAC:
                 self.src_temp[:] = output_data[_start: _end]
                 Bitwise.xor(self.src_temp, self._iv, self.src_temp)
             else:
@@ -93,7 +93,7 @@ class MessageAuthenticationCode:
 
             self.encrypt_one_block(self.src_temp)
 
-            if self.mode == BlockCipherIntegrityModes.CBC_MAC:
+            if self.mode == BlockCipherAuthenticationModes.CBC_MAC:
                 self._iv[:] = self.src_temp[:]
             else:
                 pass
@@ -156,7 +156,7 @@ if __name__ == '__main__':
 
     print('-' * 80)
     print('Mode : CBC-MAC')
-    aes = MessageAuthenticationCode(SymmetricAlgorithm.AES, BlockCipherIntegrityModes.CBC_MAC)
+    aes = MessageAuthenticationCode(SymmetricAlgorithm.AES, BlockCipherAuthenticationModes.CBC_MAC)
     aes.set_key(_key)
     _output_data = aes.generate(_input_data, final=True)
     print(f'MAC {_output_data}')
@@ -165,7 +165,7 @@ if __name__ == '__main__':
 
     print('-' * 80)
     print('Mode : CBC-MAC')
-    aes = MessageAuthenticationCode(SymmetricAlgorithm.AES, BlockCipherIntegrityModes.CBC_MAC)
+    aes = MessageAuthenticationCode(SymmetricAlgorithm.AES, BlockCipherAuthenticationModes.CBC_MAC)
     aes.set_key(_key)
     _output_data = aes.generate(_input_data, final=True, mac_length=4)
     print(f'MAC {_output_data}')
@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
     print('-' * 80)
     print('Mode : CBC-MAC')
-    aes = MessageAuthenticationCode(SymmetricAlgorithm.AES, BlockCipherIntegrityModes.CBC_MAC)
+    aes = MessageAuthenticationCode(SymmetricAlgorithm.AES, BlockCipherAuthenticationModes.CBC_MAC)
     aes.set_key(_key)
     _output = aes.verify(_input_data, final=True, mac=_output_data)
     print(f'MAC verified status: {_output}')

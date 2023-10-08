@@ -2,208 +2,180 @@
 import numpy as np
 
 # from import external library
-from typing import Optional, Union
+from abc import ABC
+from typing import Union
 
 # from import internal library
 from bitwise import Bitwise
-from block_cipher_modes import SymmetricAlgorithm, AEADModes
+from block_cipher_modes import SymmetricAlgorithm, \
+    BlockCipherConfidentialityModes, BlockCipherAuthenticationModes
 from block_cipher import BlockCipher
 from mac import MessageAuthenticationCode
-from padding import Padding, PaddingScheme
 from utility import Utility
 
 
-class AEAD:
+class AEAD(ABC):
     def __init__(
             self,
             algorithm: SymmetricAlgorithm,
-            mode: AEADModes,
-            iv: Optional[Union[str, np.ndarray]] = None
+            confidential_mode: BlockCipherConfidentialityModes,
+            authentication_mode: BlockCipherAuthenticationModes,
+            key: Union[str, np.ndarray],
+            iv: Union[str, np.ndarray],
+            payload_bit_length: int,
+            mac_length: int,
+            associated_data: Union[str, np.ndarray] = ''
     ):
         # Authenticated Encryption with Additional Data
-        # create an algorithm instance
-        BlockCipher(algorithm)
-        self.algorithm = algorithm.value()
-        self._block_size = self.algorithm.get_block_size()
-        self.encrypt_one_block = self.algorithm.get_encrypt_method()
-        self.decrypt_one_block = self.algorithm.get_decrypt_method()
+        self.algorithm = algorithm
+        self._validate_algorithm()
+        self.algorithm_obj = algorithm.value()
+        self._block_size = self.algorithm_obj.get_block_size()
 
         # verify and store mode
-        AEADModes(mode)
-        self.mode = mode
-        self.is_chaining = bool(mode.value & BlockCipherModesOfOperation.CHAINING_BIT)
-        self.block_cipher = mode.value & BlockCipherModesOfOperation.BLOCK_CIPHER
-        self.stream_cipher = mode.value & BlockCipherModesOfOperation.STREAM_CIPHER
+        # aead_mode = AEADModes(confidential_mode.value | authentication_mode.value)
+        confidential_mode = confidential_mode
+        authentication_mode = authentication_mode
 
-        # store iv and initialize iv (numpy array)
+        # set payload length
+        self.payload_bit_length = payload_bit_length
+        self.p = (payload_bit_length + 7) // 8
+
+        # set expected MAC length
+        self.t = mac_length
+
+        # set associated data
+        self.associated_data = Utility.copy_to_numpy(associated_data, error_msg='Invalid Initialization Vector')
+        self.a = Utility.get_byte_length(associated_data)
+
+        # perform algorithm specific operation like validation or setting some parameters
+        # as inherited algorithm calls dunder init method of its parent class
+        # in the beginning of its dunder init
+        self._perform_algorithm_specific_operation()
+
+        # create instances of BlockCipher and MAC
+        self.confidential = BlockCipher(algorithm, confidential_mode)
+        self.authentication = MessageAuthenticationCode(algorithm, authentication_mode)
+
+        # set key
+        self._set_key(key)
+
+        # set iv
+        self.counter = np.zeros((self._block_size,), dtype=np.uint8)
+        self._set_iv(iv)
+
+        # allocated blocks to hold the associated data
+        associated_data_len = self._get_associated_data_length()
+        self.block = np.zeros((associated_data_len,), dtype=np.uint8)
+
+        # apply formatting function on N and A
+        self._encode_block()
+
+        # Special handling:
+        # perform confidential on first block
+        input_data = np.zeros((self._block_size,), dtype=np.uint8)
+        self.cipher1 = np.zeros((self._block_size,), dtype=np.uint8)
+        self.confidential.encrypt(input_data, self.cipher1)
+
+        # start performing authentication with associated data
+        self.authentication.generate(self.block)
+
+    def _validate_algorithm(self):
+        raise NotImplementedError('Provide the definition of validate algorithm')
+
+    def _format_counter_block(self, iv: np.ndarray):
+        raise NotImplementedError('Provide the definition of format counter block')
+
+    def _perform_algorithm_specific_operation(self):
+        raise NotImplementedError('Provide the definition of perform algorithm specific operation')
+
+    def _get_associated_data_length(self) -> int:
+        raise NotImplementedError('Provide the definition of get associated data length')
+
+    def _encode_block(self):
+        raise NotImplementedError('Provide the definition of encode block')
+
+    def _set_key(self, key: Union[str, np.ndarray]):
+        self.confidential.set_key(key)
+        self.authentication.set_key(key)
+
+    def _set_iv(self, iv: Union[str, np.ndarray]):
+        # store iv
         self.iv = iv
-        self._iv = None
 
-        # set iv (numpy array) if passed
-        if iv is not None:
-            self.set_iv(iv)
+        # format and store iv as numpy array
+        _iv = Utility.copy_to_numpy(iv, error_msg='Invalid Initialization Vector')
+        self._format_counter_block(_iv)
 
-        # verify and store pad
-        PaddingScheme(pad)
-        self.pad = pad
+        # validate iv length
+        if self._block_size != len(self.counter):
+            raise ValueError(f'IV length {len(self.counter)} is not a valid block size')
 
-        # create padding object
-        self.padding = Padding(pad)
-
-        # working numpy buffer
-        self.src_temp = np.zeros((self._block_size,), dtype=np.uint8)
+        self.confidential.set_iv(self.counter)
 
     def generate_encrypt(
             self,
             input_data: Union[str, np.ndarray],
             output_data: np.ndarray = None,
+            mac: np.ndarray = None,
             final: bool = False
     ) -> Union[str, np.ndarray]:
-        # copy input to output for further calculation
-        output_data = Utility.copy_to_numpy(input_data, out_data=output_data, error_msg='Invalid plaintext')
+        # encrypt the input data for authenticity
+        _mac = self.authentication.generate(input_data, final, mac)
 
-        # append padding in final call
+        # encrypt the input data for confidentiality
+        output_data = self.confidential.encrypt(input_data, output_data, final)
+
         if final:
-            output_data = self.padding.apply_padding(output_data)
+            # perform final step
+            if isinstance(_mac, str):
+                _mac = Utility.copy_to_numpy(_mac)
 
-        if len(output_data) % self._block_size:
-            raise ValueError(f'Input data is not multiple of block length ({self._block_size} bytes).'
-                             'Padding will only be handled in final call')
+            Bitwise.xor(_mac, self.cipher1, self.cipher1)
+            mac_xor_cipher1 = self.cipher1[:self.t]
 
-        if self.is_chaining and self._iv is None:
-            raise ValueError('IV is not set')
-
-        # calculate number of complete blocks
-        no_of_blocks = len(output_data) // self._block_size
-
-        # process each block
-        for i in range(no_of_blocks):
-            _start = i * self._block_size
-            _end = _start + self._block_size
-
-            if self.is_chaining:
-                if self.stream_cipher:
-                    self.src_temp[:] = self._iv[:]
-                elif self.block_cipher:
-                    self.src_temp[:] = output_data[_start: _end]
-                    Bitwise.xor(self.src_temp, self._iv, self.src_temp)
-                else:
-                    pass
-            else:
-                self.src_temp[:] = output_data[_start: _end]
-
-            self.encrypt_one_block(self.src_temp)
-
-            if self.is_chaining:
-                if self.mode == BlockCipherConfidentialityModes.CBC:
-                    output_data[_start: _end] = self.src_temp[:]
-                    self._iv[:] = output_data[_start: _end]
-                elif self.stream_cipher:
-                    Bitwise.xor(self.src_temp, output_data[_start: _end], output_data[_start: _end])
-                    if self.mode == BlockCipherConfidentialityModes.OFB:
-                        self._iv[:] = self.src_temp[:]
-                    elif self.mode == BlockCipherConfidentialityModes.CFB:
-                        self._iv[:] = output_data[_start: _end]
-                    elif self.mode == BlockCipherConfidentialityModes.CTR:
-                        self._increment_iv()
-                    else:
-                        pass
-                else:
-                    pass
-            else:
-                output_data[_start: _end] = self.src_temp[:]
-
-        # return output in same format as input
-        if isinstance(input_data, str):
-            return Utility.convert_to_str(output_data)
+            # append MAC
+            if isinstance(output_data, np.ndarray):
+                result = np.zeros((len(output_data) + len(mac_xor_cipher1)), dtype=np.uint8)
+                result[:len(output_data)] = output_data[:]
+                result[len(output_data):] = mac_xor_cipher1[:]
+                return result
+            elif isinstance(output_data, str):
+                return output_data + Utility.convert_to_str(mac_xor_cipher1)
 
         return output_data
 
-    def decrypt(
+    def decrypt_verify(
             self,
             input_data: Union[str, np.ndarray],
             output_data: np.ndarray = None,
             final: bool = False
     ) -> Union[str, np.ndarray]:
-        # copy input to output for further calculation
-        output_data = Utility.copy_to_numpy(input_data, out_data=output_data, error_msg='Invalid ciphertext')
-
-        if len(output_data) % self._block_size:
-            raise ValueError(f'Input data is not multiple of block length ({self._block_size} bytes)')
-
-        if self.is_chaining and self._iv is None:
-            raise ValueError('IV is not set')
-
-        # calculate number of complete blocks
-        no_of_blocks = len(output_data) // self._block_size
-
-        # process each block
-        for i in range(no_of_blocks):
-            _start = i * self._block_size
-            _end = _start + self._block_size
-
-            if self.is_chaining:
-                if self.stream_cipher:
-                    self.src_temp[:] = self._iv[:]
-                elif self.block_cipher:
-                    self.src_temp[:] = output_data[_start: _end]
-                else:
-                    pass
-            else:
-                self.src_temp[:] = output_data[_start: _end]
-
-            if self.stream_cipher:
-                self.encrypt_one_block(self.src_temp)
-            else:
-                self.decrypt_one_block(self.src_temp)
-
-            if self.is_chaining:
-                if self.mode == BlockCipherConfidentialityModes.CBC:
-                    Bitwise.xor(self.src_temp, self._iv, self.src_temp)
-                    self._iv[:] = output_data[_start: _end]
-                    output_data[_start: _end] = self.src_temp[:]
-                elif self.stream_cipher:
-                    if self.mode == BlockCipherConfidentialityModes.OFB:
-                        self._iv[:] = self.src_temp[:]
-                    elif self.mode == BlockCipherConfidentialityModes.CFB:
-                        self._iv[:] = output_data[_start: _end]
-                    elif self.mode == BlockCipherConfidentialityModes.CTR:
-                        self._increment_iv()
-                    else:
-                        pass
-                    Bitwise.xor(self.src_temp, output_data[_start: _end], output_data[_start: _end])
-                else:
-                    pass
-            else:
-                output_data[_start: _end] = self.src_temp[:]
-
-        # remove padding in final call
         if final:
-            output_data = self.padding.remove_padding(output_data)
+            _input_data = Utility.copy_to_numpy(input_data)
+            _mac_to_verify = _input_data[-self.t:]
+            _input_data = _input_data[:-self.t]
+        else:
+            _input_data = input_data
+            _mac_to_verify = None
 
-        # return output in same format as input
-        if isinstance(input_data, str):
-            output_data = Utility.convert_to_str(output_data)
+        # decrypt the input data for confidentiality
+        output_data = self.confidential.decrypt(_input_data, output_data, final)
+
+        # encrypt the input data for authenticity
+        _mac = self.authentication.generate(output_data, final)
+
+        if final:
+            # perform final step
+            if isinstance(_mac, str):
+                _mac = Utility.copy_to_numpy(_mac)
+            Bitwise.xor(_mac, self.cipher1, self.cipher1)
+
+            # verify MAC
+            if np.any(_mac_to_verify != self.cipher1[:self.t]):
+                raise ValueError("MAC is INVALID")
+
+            if isinstance(input_data, str):
+                return Utility.convert_to_str(output_data)
 
         return output_data
-
-
-if __name__ == '__main__':
-    # AES
-    _key = 'A43983414EA1090A6153B4F8ACFD06E9'
-    _input_data = '12A8A94383913B3436C44432EED44DABF945AFD13F5F6EAC2D096274B6F6A422'
-    _iv = 'A99D5BD72A296F649FCF1BE12BA2290E'
-
-    print('Scenario 1: AES')
-    print(f'Key {_key}')
-    print(f'IV {_iv}')
-    print(f'Plaintext {_input_data}')
-
-    print('-' * 80)
-    print('Mode : CCM')
-    aes = AEAD(AEADModes.CCM)
-    aes.set_key(_key)
-    _output_data = aes.generate_mac(_input_data, final=True)
-    print(f'MAC {_output_data}')
-    if _output_data != '6DB32EE1C72165CBE903039D5CC9C5B3':
-        raise RuntimeError('AES CBC-MAC fails')
