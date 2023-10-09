@@ -3,13 +3,14 @@ import numpy as np
 
 # from import external library
 from abc import ABC
-from typing import Union
+from typing import Union, Tuple
 
 # from import internal library
 from bitwise import Bitwise
 from block_cipher_modes import SymmetricAlgorithm, \
     BlockCipherConfidentialityModes, BlockCipherAuthenticationModes
 from block_cipher import BlockCipher
+from ghash import GHASH
 from mac import MessageAuthenticationCode
 from utility import Utility
 
@@ -55,7 +56,10 @@ class AEAD(ABC):
 
         # create instances of BlockCipher and MAC
         self.confidential = BlockCipher(algorithm, confidential_mode)
-        self.authentication = MessageAuthenticationCode(algorithm, authentication_mode)
+        if authentication_mode == BlockCipherAuthenticationModes.GMAC:
+            self.authentication = GHASH(algorithm)
+        else:
+            self.authentication = MessageAuthenticationCode(algorithm, authentication_mode)
 
         # set key
         self._set_key(key)
@@ -79,6 +83,7 @@ class AEAD(ABC):
 
         # start performing authentication with associated data
         self.authentication.generate(self.block)
+        self.authenticate_output_data = False
 
     def _validate_algorithm(self):
         raise NotImplementedError('Provide the definition of validate algorithm')
@@ -94,6 +99,13 @@ class AEAD(ABC):
 
     def _encode_block(self):
         raise NotImplementedError('Provide the definition of encode block')
+
+    def _final_block_special_handling(
+            self,
+            output_data: Union[str, np.ndarray],
+            mac: Union[str, np.ndarray]
+    ) -> Tuple[Union[str, np.ndarray], Union[str, np.ndarray]]:
+        raise NotImplementedError('Provide the definition of final block special handling')
 
     def _set_key(self, key: Union[str, np.ndarray]):
         self.confidential.set_key(key)
@@ -120,13 +132,19 @@ class AEAD(ABC):
             mac: np.ndarray = None,
             final: bool = False
     ) -> Union[str, np.ndarray]:
-        # encrypt the input data for authenticity
-        _mac = self.authentication.generate(input_data, final, mac)
-
         # encrypt the input data for confidentiality
         output_data = self.confidential.encrypt(input_data, output_data, final)
 
+        # encrypt the input data for authenticity
+        if self.authenticate_output_data:
+            _mac = self.authentication.generate(output_data, final, mac)
+        else:
+            _mac = self.authentication.generate(input_data, final, mac)
+
         if final:
+            # GCM has special handling of last block : len(A) || len(C)
+            output_data, _mac = self._final_block_special_handling(output_data, _mac)
+
             # perform final step
             if isinstance(_mac, str):
                 _mac = Utility.copy_to_numpy(_mac)
@@ -148,19 +166,24 @@ class AEAD(ABC):
     def decrypt_verify(
             self,
             input_data: Union[str, np.ndarray],
+            mac: Union[str, np.ndarray] = None,
             output_data: np.ndarray = None,
             final: bool = False
     ) -> Union[str, np.ndarray]:
         if final:
-            _input_data = Utility.copy_to_numpy(input_data)
-            _mac_to_verify = _input_data[-self.t:]
-            _input_data = _input_data[:-self.t]
+            if mac is not None:
+                _input_data = input_data
+                _mac_to_verify = mac
+            else:
+                _input_data = Utility.copy_to_numpy(input_data)
+                _mac_to_verify = _input_data[-self.t:]
+                _input_data = _input_data[:-self.t]
         else:
             _input_data = input_data
             _mac_to_verify = None
 
         # decrypt the input data for confidentiality
-        output_data = self.confidential.decrypt(_input_data, output_data, final)
+        output_data = self.confidential.encrypt(_input_data, output_data, final)
 
         # encrypt the input data for authenticity
         _mac = self.authentication.generate(output_data, final)

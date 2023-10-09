@@ -86,8 +86,7 @@ class MessageAuthenticationCode:
             _end = _start + self._block_size
 
             if self.mode == BlockCipherAuthenticationModes.CBC_MAC:
-                self.src_temp[:] = output_data[_start: _end]
-                Bitwise.xor(self.src_temp, self._iv, self.src_temp)
+                Bitwise.xor(self._iv, output_data[_start: _end], self.src_temp)
             else:
                 pass
 

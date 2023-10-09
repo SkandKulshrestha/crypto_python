@@ -65,6 +65,37 @@ class BlockCipher:
         # add 1
         self._iv[i] += 1
 
+    def _increment_s_bits_of_iv(self, s: int):
+        # get last index
+        i = len(self._iv) - 1
+        s_byte = s // 8
+        s_bits = s & 7
+
+        # iterate from last, until +1 have no impact on the previous byte or s bits reached
+        while self._iv[i] == 0xFF and s_byte:
+            # adding 1 and carry is populated in next operation
+            self._iv[i] = 0x00
+            i -= 1
+            s_byte -= 1
+
+        if s_byte == 0:
+            # check for remaining bits
+            mask = (1 << s_bits) - 1
+
+            # extract value of 's' lsb
+            iv = self._iv[i] & mask
+
+            # clear 's' lsb
+            self._iv[i] &= ~mask
+
+            # update the 's' bits by 1 if any of 's' bits is not set
+            if iv != mask:
+                iv = (iv + 1) & mask
+                self._iv[i] |= iv
+        else:
+            # add 1
+            self._iv[i] += 1
+
     def set_key(self, key: Union[str, np.ndarray]):
         self.algorithm.set_key(key)
 
@@ -137,6 +168,8 @@ class BlockCipher:
                         self._iv[:] = _output_data[_start: _end]
                     elif self.mode == BlockCipherConfidentialityModes.CTR:
                         self._increment_iv()
+                    elif self.mode == BlockCipherConfidentialityModes.GCTR:
+                        self._increment_s_bits_of_iv(32)
                     else:
                         pass
                 else:
@@ -209,6 +242,8 @@ class BlockCipher:
                         self._iv[:] = _output_data[_start: _end]
                     elif self.mode == BlockCipherConfidentialityModes.CTR:
                         self._increment_iv()
+                    elif self.mode == BlockCipherConfidentialityModes.GCTR:
+                        self._increment_s_bits_of_iv(32)
                     else:
                         pass
                     Bitwise.xor(self.src_temp, _output_data[_start: _end], _output_data[_start: _end])
@@ -340,12 +375,13 @@ if __name__ == '__main__':
         raise RuntimeError('AES decryption fails')
 
     print('-' * 80)
-    print('Mode : CTR')
-    aes = BlockCipher(SymmetricAlgorithm.AES, BlockCipherConfidentialityModes.CTR, PaddingScheme.M1, _iv)
+    print('Mode : GCTR')
+    _iv = 'A99D5BD72A296F649FCF1BE100000002'
+    aes = BlockCipher(SymmetricAlgorithm.AES, BlockCipherConfidentialityModes.GCTR, PaddingScheme.M1, _iv)
     aes.set_key(_key)
     _output_data_ = aes.encrypt(_input_data, final=True)
     print(f'Ciphertext {_output_data_}')
-    if _output_data_ != '1D692DFC5101603D3EFEA4C1AEF3B91CC56829EFB73A01BEDBE82E3879476A':
+    if _output_data_ != '4DB9E15D5FA37B732601C15EF19197DBC31E74A255A494957A939D043D2AC9':
         raise RuntimeError('AES encryption fails')
     aes.set_iv(_iv)
     _output_data_ = aes.decrypt(_output_data_)

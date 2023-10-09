@@ -2,7 +2,7 @@
 import numpy as np
 
 # from import external library
-from typing import Union
+from typing import Union, Tuple
 
 # from import internal library
 from block_cipher_modes import SymmetricAlgorithm, \
@@ -120,6 +120,14 @@ class CCM(AEAD):
         # Appendix A.2.2: Formatting of the Associated Data
         self._encode_associated_data_block()
 
+    def _final_block_special_handling(
+            self,
+            output_data: Union[str, np.ndarray],
+            mac: Union[str, np.ndarray]
+    ) -> Tuple[Union[str, np.ndarray], Union[str, np.ndarray]]:
+        # do nothing
+        return output_data, mac
+
     def _encode_counter_zero(self):
         # Appendix A.3: Formatting of the Counter Blocks
         reserved = 0
@@ -165,11 +173,13 @@ class CCM(AEAD):
     def decrypt_verify(
             self,
             ciphertext: Union[str, np.ndarray],
+            mac: Union[str, np.ndarray] = None,
             payload: np.ndarray = None,
             final: bool = False
     ) -> Union[str, np.ndarray]:
         return super(CCM, self).decrypt_verify(
             ciphertext,
+            mac,
             payload,
             final
         )

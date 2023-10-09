@@ -28,7 +28,7 @@ class BlockCipherModesOfOperation(IntEnum):
     # 3-bit Block Cipher: ECB, CBC
     BLOCK_CIPHER = 0x7000
 
-    # 4-bit Stream Cipher: OFB, CFB, CTR
+    # 4-bit Stream Cipher: OFB, CFB, CTR, GCTR
     STREAM_CIPHER = 0x0F00
 
     # 1-bit Message Authentication Code
@@ -61,6 +61,10 @@ class BlockCipherConfidentialityModes(IntEnum):
     # Counter
     # 0x8400
     CTR = BlockCipherModesOfOperation.CHAINING_BIT | 0x0400
+
+    # Galois Counter
+    # 0x8800
+    GCTR = BlockCipherModesOfOperation.CHAINING_BIT | 0x0800
 
 
 class BlockCipherAuthenticationModes(IntEnum):
