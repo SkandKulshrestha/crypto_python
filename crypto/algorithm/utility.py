@@ -361,6 +361,12 @@ class Utility:
             _polynomial |= 1 << power
         return _polynomial
 
+    @staticmethod
+    def print_arr(arr: np.ndarray):
+        for index in range(len(arr)):
+            print(f'{arr[index]:02X}', end=' ')
+        print()
+
 
 if __name__ == '__main__':
     for i in range(5, 100):

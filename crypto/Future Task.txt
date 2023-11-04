@@ -4,7 +4,7 @@ Implementation:
 Symmetric:
     FEAL, Serpent, Twofish, RC6, MARS, GOST(GOST 28147-89),
     IDEA, Blowfish
-    Block Cipher Modes, MAC
+    MAC
 
 Asymmetric:
     DSA, ECC, DH, ElGamal

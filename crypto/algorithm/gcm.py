@@ -8,6 +8,7 @@ from typing import Union, Tuple
 from block_cipher_modes import SymmetricAlgorithm, \
     BlockCipherConfidentialityModes, BlockCipherAuthenticationModes
 from aead import AEAD
+from ghash import GHASH
 
 
 class GCM(AEAD):
@@ -82,7 +83,11 @@ class GCM(AEAD):
             self.counter[:12] = self.iv[:]
             self.counter[-1] = 0x01
         else:
-            raise NotImplementedError
+            ghash = GHASH(self.algorithm)
+            ghash.set_key(self.key)
+            ghash.generate(self.iv, final=True)
+            self._set_length(self.counter[self._block_size // 2:], len(self.iv) * 8)
+            ghash.generate(self.counter, final=True, hash_=self.counter)
 
     def _format_counter_block(self, iv: np.ndarray):
         self.c = self.p
@@ -130,34 +135,43 @@ class GCM(AEAD):
 
 if __name__ == '__main__':
     # AES: https://csrc.nist.rip/groups/ST/toolkit/BCM/documents/proposedmodes/gcm/gcm-spec.pdf
+    # Test Case 1
+    _key = '00000000000000000000000000000000'
+    _payload = ''
+    _iv = '000000000000000000000000'
+    _associated_data = ''
+
+    print('Test Case 1')
+    print(f'Key {_key}')
+    print(f'IV {_iv}')
+    print(f'Payload {_payload}')
+    print(f'Associated Data {_associated_data}')
+
+    print('-' * 80)
+    print('Mode : GCM')
+    aes = GCM(SymmetricAlgorithm.AES, _key, _iv, 0 * 8, 16, _associated_data)
+    _ciphertext_, _mac_ = aes.generate_encrypt(_payload, final=True)
+    print(f'Ciphertext + MAC {_ciphertext_, _mac_}')
+    if _ciphertext_ != ''.upper():
+        raise RuntimeError('AES GCM generate_encrypt ciphertext fails')
+    if _mac_ != '58e2fccefa7e3061367f1d57a4e7455a'.upper():
+        raise RuntimeError('AES GCM generate_encrypt mac fails')
+
+    aes = GCM(SymmetricAlgorithm.AES, _key, _iv, 0 * 8, 16, _associated_data)
+    _payload_out = aes.decrypt_verify(_ciphertext_, _mac_, final=True)
+    print(f'Payload {_payload_out}')
+    if _payload_out != _payload.upper():
+        raise RuntimeError('AES GCM decrypt_verify fails')
+
+    print('=' * 80)
+
+    # Test Case 2
     _key = '00000000000000000000000000000000'
     _payload = '00000000000000000000000000000000'
     _iv = '000000000000000000000000'
     _associated_data = ''
 
-    print('Scenario 0: AES')
-    print(f'Key {_key}')
-    print(f'IV {_iv}')
-    print(f'Payload {_payload}')
-    print(f'Associated Data {_associated_data}')
-
-    # print('-' * 80)
-    # print('Mode : GCM')
-    # aes = GCM(SymmetricAlgorithm.AES, _key, _iv, 16 * 8, 16, _associated_data)
-    # _ciphertext_, _mac = aes.generate_encrypt(_payload, final=True)
-    # print(f'Ciphertext + MAC {_ciphertext_, _mac}')
-    # if _ciphertext_ != '0388dace60b6a392f328c2b971b2fe78'.upper():
-    #     raise RuntimeError('AES GCM generate_encrypt ciphertext fails')
-    # if _mac != 'ab6e47d42cec13bdf53a67b21257bddf'.upper():
-    #     raise RuntimeError('AES GCM generate_encrypt mac fails')
-
-    # AES
-    _key = 'A43983414EA1090A6153B4F8ACFD06E9'
-    _payload = '12A8A94383913B3436C44432EED44DABF945AFD13F5F6EAC2D096274B6F6A4'
-    _iv = 'A99D5BD72A296F649FCF1BE1'
-    _associated_data = '0001020304050607'
-
-    print('Scenario 1: AES')
+    print('Test Case 2')
     print(f'Key {_key}')
     print(f'IV {_iv}')
     print(f'Payload {_payload}')
@@ -165,22 +179,36 @@ if __name__ == '__main__':
 
     print('-' * 80)
     print('Mode : GCM')
-    aes = GCM(SymmetricAlgorithm.AES, _key, _iv, 31 * 8, 16, _associated_data)
-    _ciphertext_, _mac = aes.generate_encrypt(_payload, final=True)
-    print(f'Ciphertext + MAC {_ciphertext_, _mac}')
-    if _ciphertext_ != '4DB9E15D5FA37B732601C15EF19197DBC31E74A255A494957A939D043D2AC9'.upper():
+    aes = GCM(SymmetricAlgorithm.AES, _key, _iv, 16 * 8, 16, _associated_data)
+    _ciphertext_, _mac_ = aes.generate_encrypt(_payload, final=True)
+    print(f'Ciphertext + MAC {_ciphertext_, _mac_}')
+    if _ciphertext_ != '0388dace60b6a392f328c2b971b2fe78'.upper():
         raise RuntimeError('AES GCM generate_encrypt ciphertext fails')
-    if _mac != '3B15E3440E0AE755AFA02A7E99EAF022'.upper():
+    if _mac_ != 'ab6e47d42cec13bdf53a67b21257bddf'.upper():
         raise RuntimeError('AES GCM generate_encrypt mac fails')
 
-    aes = GCM(SymmetricAlgorithm.AES, _key, _iv, 31 * 8, 16, _associated_data)
-    _payload_out = aes.decrypt_verify(_ciphertext_, _mac, final=True)
+    aes = GCM(SymmetricAlgorithm.AES, _key, _iv, 16 * 8, 16, _associated_data)
+    _payload_out = aes.decrypt_verify(_ciphertext_, _mac_, final=True)
     print(f'Payload {_payload_out}')
     if _payload_out != _payload.upper():
         raise RuntimeError('AES GCM decrypt_verify fails')
 
-    _iv = 'A99D5BD72A296F649FCF1BE112'
-    print('Scenario 2: AES')
+    print('=' * 80)
+
+    # Test Case 6
+    _key = 'feffe9928665731c6d6a8f9467308308'
+    _payload = 'd9313225f88406e5a55909c5aff5269a' \
+               '86a7a9531534f7da2e4c303d8a318a72' \
+               '1c3c0c95956809532fcf0e2449a6b525' \
+               'b16aedf5aa0de657ba637b39'
+    _iv = '9313225df88406e555909c5aff5269aa' \
+          '6a7a9538534f7da1e4c303d2a318a728' \
+          'c3c0c95156809539fcf0e2429a6b5254' \
+          '16aedbf5a0de6a57a637b39b'
+    _associated_data = 'feedfacedeadbeeffeedfacedeadbeef' \
+                       'abaddad2'
+
+    print('Test Case 6')
     print(f'Key {_key}')
     print(f'IV {_iv}')
     print(f'Payload {_payload}')
@@ -188,16 +216,19 @@ if __name__ == '__main__':
 
     print('-' * 80)
     print('Mode : GCM')
-    aes = GCM(SymmetricAlgorithm.AES, _key, _iv, 31 * 8, 16, _associated_data)
-    _ciphertext_, _mac = aes.generate_encrypt(_payload, final=True)
-    print(f'Ciphertext + MAC {_ciphertext_, _mac}')
-    if _ciphertext_ != '86ECF1D3A0FA4A78F20E558EF97CEB597CCAC365A1D8CE7B34739DA55F2627'.upper():
-        raise RuntimeError('AES GCM generate_encrypt fails')
-    if _mac != '3FCC4392249C6D493CB935623A02A8FC'.upper():
-        raise RuntimeError('AES GCM generate_encrypt fails')
+    aes = GCM(SymmetricAlgorithm.AES, _key, _iv, 60 * 8, 16, _associated_data)
+    _ciphertext_, _mac_ = aes.generate_encrypt(_payload, final=True)
+    print(f'Ciphertext + MAC {_ciphertext_, _mac_}')
+    if _ciphertext_ != '8ce24998625615b603a033aca13fb894' \
+                       'be9112a5c3a211a8ba262a3cca7e2ca7' \
+                       '01e4a9a4fba43c90ccdcb281d48c7c6f' \
+                       'd62875d2aca417034c34aee5'.upper():
+        raise RuntimeError('AES GCM generate_encrypt ciphertext fails')
+    if _mac_ != '619cc5aefffe0bfa462af43c1699d050'.upper():
+        raise RuntimeError('AES GCM generate_encrypt mac fails')
 
-    aes = GCM(SymmetricAlgorithm.AES, _key, _iv, 31 * 8, 16, _associated_data)
-    _payload_out = aes.decrypt_verify(_ciphertext_, _mac, final=True)
+    aes = GCM(SymmetricAlgorithm.AES, _key, _iv, 60 * 8, 16, _associated_data)
+    _payload_out = aes.decrypt_verify(_ciphertext_, _mac_, final=True)
     print(f'Payload {_payload_out}')
     if _payload_out != _payload.upper():
         raise RuntimeError('AES GCM decrypt_verify fails')

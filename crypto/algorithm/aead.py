@@ -83,6 +83,9 @@ class AEAD(ABC):
 
         # start performing authentication with associated data
         self.authentication.generate(self.block)
+
+        # CCM generates mac on plaintext data
+        # GCM generates mac on ciphertext data
         self.authenticate_output_data = False
 
     def _validate_algorithm(self):
@@ -108,6 +111,10 @@ class AEAD(ABC):
         raise NotImplementedError('Provide the definition of final block special handling')
 
     def _set_key(self, key: Union[str, np.ndarray]):
+        # store key
+        self.key = key
+
+        # set key for confidential and authentication algorithm
         self.confidential.set_key(key)
         self.authentication.set_key(key)
 
@@ -135,7 +142,7 @@ class AEAD(ABC):
         # encrypt the input data for confidentiality
         output_data = self.confidential.encrypt(input_data, output_data, final)
 
-        # encrypt the input data for authenticity
+        # encrypt the input/output data for authenticity
         if self.authenticate_output_data:
             _mac = self.authentication.generate(output_data, final, mac)
         else:
@@ -174,6 +181,8 @@ class AEAD(ABC):
             if mac is not None:
                 _input_data = input_data
                 _mac_to_verify = mac
+                if isinstance(mac, str):
+                    _mac_to_verify = Utility.copy_to_numpy(_mac_to_verify)
             else:
                 _input_data = Utility.copy_to_numpy(input_data)
                 _mac_to_verify = _input_data[-self.t:]
@@ -185,10 +194,16 @@ class AEAD(ABC):
         # decrypt the input data for confidentiality
         output_data = self.confidential.encrypt(_input_data, output_data, final)
 
-        # encrypt the input data for authenticity
-        _mac = self.authentication.generate(output_data, final)
+        # encrypt the input/output data for authenticity
+        if self.authenticate_output_data:
+            _mac = self.authentication.generate(input_data, final)
+        else:
+            _mac = self.authentication.generate(output_data, final)
 
         if final:
+            # GCM has special handling of last block : len(A) || len(C)
+            output_data, _mac = self._final_block_special_handling(output_data, _mac)
+
             # perform final step
             if isinstance(_mac, str):
                 _mac = Utility.copy_to_numpy(_mac)
@@ -198,7 +213,7 @@ class AEAD(ABC):
             if np.any(_mac_to_verify != self.cipher1[:self.t]):
                 raise ValueError("MAC is INVALID")
 
-            if isinstance(input_data, str):
+            if isinstance(input_data, str) and isinstance(output_data, np.ndarray):
                 return Utility.convert_to_str(output_data)
 
         return output_data
